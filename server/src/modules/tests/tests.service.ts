@@ -6,13 +6,13 @@ import {
 import { PrismaService } from '../../prisma.service';
 import { CreateTestDto } from './dto/create-test.dto';
 import { UpdateTestDto } from './dto/update-test.dto';
-import { Test, Prisma } from '@prisma/client';
+import { Test, Prisma, Question, AnswerOption } from '@prisma/client';
 
 @Injectable()
 export class TestsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createTestDto: any, userId: string): Promise<Test> {
+  async create(createTestDto: CreateTestDto, userId: string): Promise<Test> {
     // Проверяем, существует ли пользователь
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -38,19 +38,26 @@ export class TestsService {
       // Добавляем связи со специализациями, если они указаны
       if (
         createTestDto.specializationIds &&
+        Array.isArray(createTestDto.specializationIds) &&
         createTestDto.specializationIds.length > 0
       ) {
-        await Promise.all(
-          createTestDto.specializationIds.map((specializationId) =>
-            tx.specializationTest.create({
-              data: {
-                testId: test.id,
-                specializationId,
-                isRequired: false,
-              },
-            }),
-          ),
-        );
+        const promises: Promise<any>[] = [];
+
+        for (const specializationId of createTestDto.specializationIds) {
+          if (typeof specializationId === 'string') {
+            promises.push(
+              tx.specializationTest.create({
+                data: {
+                  testId: test.id,
+                  specializationId,
+                  isRequired: false,
+                },
+              }) as any,
+            );
+          }
+        }
+
+        await Promise.all(promises);
       }
 
       return test;
@@ -197,24 +204,33 @@ export class TestsService {
       });
 
       // Если указаны специализации, обновляем их
-      if (updateTestDto.specializationIds) {
+      if (
+        updateTestDto.specializationIds &&
+        Array.isArray(updateTestDto.specializationIds)
+      ) {
         // Удаляем существующие связи
         await tx.specializationTest.deleteMany({
           where: { testId: id },
         });
 
-        // Добавляем новые связи
-        await Promise.all(
-          updateTestDto.specializationIds.map((specializationId) =>
-            tx.specializationTest.create({
-              data: {
-                testId: id,
-                specializationId,
-                isRequired: false,
-              },
-            }),
-          ),
-        );
+        // Добавляем новые связи с использованием того же подхода, что и в create
+        const promises: Promise<any>[] = [];
+
+        for (const specializationId of updateTestDto.specializationIds) {
+          if (typeof specializationId === 'string') {
+            promises.push(
+              tx.specializationTest.create({
+                data: {
+                  testId: id,
+                  specializationId,
+                  isRequired: false,
+                },
+              }) as any,
+            );
+          }
+        }
+
+        await Promise.all(promises);
       }
 
       return updatedTest;
@@ -274,7 +290,7 @@ export class TestsService {
     isPublished?: boolean,
   ): Promise<any[]> {
     // Базовые параметры запроса
-    let where: Prisma.TestWhereInput = {};
+    const where: Prisma.TestWhereInput = {};
 
     // Если пользователь не админ или HR, показываем только опубликованные тесты
     if (!userRoles.some((role) => ['admin', 'hr'].includes(role))) {
@@ -468,7 +484,11 @@ export class TestsService {
     });
   }
 
-  async submitTest(testId: string, userId: string, answers: any): Promise<any> {
+  async submitTest(
+    testId: string,
+    userId: string,
+    answers: any[],
+  ): Promise<any> {
     // Находим незавершенную попытку теста
     const testAttempt = await this.prisma.testAttempt.findFirst({
       where: {
@@ -482,14 +502,29 @@ export class TestsService {
       throw new NotFoundException('Активная попытка теста не найдена');
     }
 
-    // Получаем вопросы теста
-    const test = await this.findOne(testId);
+    // Получаем тест с вопросами
+    const testWithQuestions = await this.prisma.test.findUnique({
+      where: { id: testId },
+      include: {
+        questions: {
+          include: {
+            answerOptions: true,
+          },
+        },
+      },
+    });
+
+    if (!testWithQuestions) {
+      throw new NotFoundException(`Тест с ID ${testId} не найден`);
+    }
+
+    const questions = testWithQuestions.questions;
 
     // Обрабатываем ответы и вычисляем оценку
     const totalScore = await this.processAnswers(
       testAttempt.id,
       answers,
-      test.questions,
+      questions,
     );
 
     // Обновляем попытку теста
@@ -519,10 +554,25 @@ export class TestsService {
 
   private async processAnswers(
     testAttemptId: string,
-    answers: any,
-    questions: any[],
+    answers: any[],
+    questions: (Question & { answerOptions: AnswerOption[] })[],
   ): Promise<number> {
     let totalScore = 0;
+
+    // Если questions не определен или пуст, получаем их из базы данных
+    if (!questions || questions.length === 0) {
+      const testAttempt = await this.prisma.testAttempt.findUnique({
+        where: { id: testAttemptId },
+        include: { test: { select: { id: true } } },
+      });
+
+      if (testAttempt?.test?.id) {
+        questions = await this.prisma.question.findMany({
+          where: { testId: testAttempt.test.id },
+          include: { answerOptions: true },
+        });
+      }
+    }
 
     // Обрабатываем каждый ответ
     for (const answer of answers) {
@@ -539,10 +589,21 @@ export class TestsService {
         question.type === 'MULTIPLE_CHOICE'
       ) {
         // Для выбора одного или нескольких вариантов
-        if (answer.selectedOptionId) {
-          const option = question.answerOptions.find(
-            (opt) => opt.id === answer.selectedOptionId,
-          );
+        if (
+          answer.selectedOptionId &&
+          question.answerOptions &&
+          Array.isArray(question.answerOptions)
+        ) {
+          let option: AnswerOption | undefined = undefined;
+
+          // Безопасный поиск опции
+          for (const opt of question.answerOptions) {
+            if (opt && opt.id === answer.selectedOptionId) {
+              option = opt;
+              break;
+            }
+          }
+
           isCorrect = option?.isCorrect || false;
 
           // Присваиваем баллы, если ответ правильный

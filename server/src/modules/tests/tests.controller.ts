@@ -28,7 +28,7 @@ export class TestsController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  findAll(@Query('published') published?: string, @Request() req) {
+  findAll(@Request() req, @Query('published') published?: string) {
     const isPublished = published === 'true';
     return this.testsService.findAllForUser(
       req.user.id,
