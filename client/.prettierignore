@@ -1,0 +1,24 @@
+# Игнорировать build-директории
+dist/
+build/
+coverage/
+
+# Игнорировать node_modules
+node_modules/
+
+# Игнорировать package-lock и yarn.lock
+package-lock.json
+yarn.lock
+
+# Игнорировать CSS файлы (опционально)
+# *.css
+
+# Игнорировать конфигурационные файлы
+*.config.js
+*.config.ts
+vite-env.d.ts
+
+# Игнорировать прочие файлы
+.DS_Store
+.env
+.env.* 

@@ -1,0 +1,6 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🧪 Проверка типов и тестов перед пушем..."
+npm run lint-format
+npm run build 
