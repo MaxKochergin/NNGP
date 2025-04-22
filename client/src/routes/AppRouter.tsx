@@ -1,15 +1,13 @@
 import { createBrowserRouter } from "react-router-dom";
-import Landing from "../pages/landing/Landing";
+
+import { publicRoutes } from "./PublicRoutes";
 
 
 export const AppRouter = createBrowserRouter([
+    ...publicRoutes,
+    // ...privateRoutes,
     {
-        path: "/",
-        element: <Landing />,
-    },
-    {
-
-       path: "*",
-       element: <div>Not Found</div>,
+        path: "*",
+        element: <div>Not Found</div>,
     },
 ]) 

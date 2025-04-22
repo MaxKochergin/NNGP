@@ -9,19 +9,20 @@ import {
   Drawer,
   IconButton,
   List,
-  ListItem,
   ListItemButton,
   ListItemText,
   Toolbar,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import logo from '../../../assets/images/logoNNGP.svg';
-import Button from '../../common/Button';
 import Image from '../../common/Image';
+import NavigationButton from '../../common/SmartButton/NavigationButton';
 
 export const Header = () => {
   // Состояние для отслеживания открытия/закрытия мобильного меню
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -35,6 +36,11 @@ export const Header = () => {
   const handleCloseMenu = () => {
     setMobileMenuOpen(false);
   };
+  // Функция для навигации с закрытием меню
+  const handleNavigate = (path: string) => {
+    handleCloseMenu(); // Сначала закрываем меню
+    navigate(path); // Затем выполняем навигацию
+  };
 
   return (
     <AppBar position="static" color="default" elevation={0}>
@@ -43,7 +49,7 @@ export const Header = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Image src={logo} alt="logo" width={42} height={42} />
           {/* Кнопка "О нас" видна только на десктопе */}
-          {!isMobile && <Button>О нас</Button>}
+          {!isMobile && <NavigationButton href="https://xn--c1ataj.xn--p1ai/company/">О нас</NavigationButton>}
         </Box>
 
         {/* Пространство в центре */}
@@ -62,8 +68,10 @@ export const Header = () => {
         ) : (
           // Кнопки только для десктопа
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Button>Войти</Button>
-            <Button color="error">Зарегистрироваться</Button>
+            <NavigationButton to="/auth/login">Войти</NavigationButton>
+            <NavigationButton color="error" to="/auth/register" >
+              Зарегистрироваться
+            </NavigationButton>
           </Box>
         )}
 
@@ -100,16 +108,22 @@ export const Header = () => {
 
           {/* Пункты мобильного меню */}
           <List>
-            <ListItemButton onClick={handleCloseMenu}>
+            <ListItemButton
+              component="a"
+              href="https://xn--c1ataj.xn--p1ai/company/"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleCloseMenu}
+            >
               <ListItemText primary="О нас" />
             </ListItemButton>
 
-            <ListItemButton onClick={handleCloseMenu}>
+            <ListItemButton onClick={() => handleNavigate('/auth/login')}>
               <ListItemText primary="Войти" />
             </ListItemButton>
 
             <ListItemButton
-              onClick={handleCloseMenu}
+              onClick={() => handleNavigate('/auth/register')}
               sx={{
                 bgcolor: 'error.main',
                 color: 'white',

@@ -120,51 +120,14 @@ const PublicFooter = () => {
           </Grid>
 
           {/* Ссылки на разделы сайта */}
-          <Grid item xs={12} md={4}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <FooterSection>
-                  <FooterTitle variant="h6">КОМПАНИЯ</FooterTitle>
-                  <Stack>
-                    <FooterLink href="/about">О компании</FooterLink>
-                    <FooterLink href="/history">История</FooterLink>
-                    <FooterLink href="/management">Руководство</FooterLink>
-                    <FooterLink href="/vacancies">Вакансии</FooterLink>
-                    <FooterLink href="/documents">Документы</FooterLink>
-                  </Stack>
-                </FooterSection>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FooterSection>
-                  <FooterTitle variant="h6">УСЛУГИ</FooterTitle>
-                  <Stack>
-                    <FooterLink href="/investment">Инвестиционное обоснование проекта</FooterLink>
-                    <FooterLink href="/engineering">Инжиниринг</FooterLink>
-                    <FooterLink href="/tech-brokering">Технологический брокеринг</FooterLink>
-                    <FooterLink href="/research">Научные исследования и разработки</FooterLink>
-                    <FooterLink href="/software">Разработка программного обеспечения</FooterLink>
-                  </Stack>
-                </FooterSection>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FooterSection>
-                  <FooterTitle variant="h6">ИНФОРМАЦИЯ</FooterTitle>
-                  <Stack>
-                    <FooterLink href="/purchases">Закупки услуг</FooterLink>
-                    <FooterLink href="/projects">Проекты</FooterLink>
-                    <FooterLink href="/contacts">Контакты</FooterLink>
-                  </Stack>
-                </FooterSection>
-              </Grid>
-            </Grid>
-          </Grid>
+          
         </Grid>
 
         {/* Нижняя часть футера */}
         <FooterBottom>
           <Box display="flex" alignItems="center">
             <Logo src={logo} alt="НИЖЕГОРОДНЕФТЕГАЗПРОЕКТ" />
-            <FooterText>© 2024 ООО «ННГП»</FooterText>
+            <FooterText>© 2025 ООО «ННГП»</FooterText>
           </Box>
           <Box>
             <FooterLink href="/privacy-policy">

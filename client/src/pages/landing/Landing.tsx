@@ -1,9 +1,11 @@
 import { PublicLayout } from "../../components/layouts/Public/PublicLayout";
-
+import HeroBanner from "./heroBanner/HeroBanner";
+import FeaturesSection from './featuresSection/Features';
 export const Landing = () => {
     return (
         <PublicLayout>
-            <div>Landing</div>
+            <HeroBanner />
+            <FeaturesSection />
         </PublicLayout>
         
     )

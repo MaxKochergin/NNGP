@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Button as MuiButton, ButtonProps as MuiButtonProps, styled } from '@mui/material';
 
 // Расширяем типы пропсов от Material UI Button
-interface ButtonProps extends Omit<MuiButtonProps, 'color'> {
+export interface ButtonProps extends Omit<MuiButtonProps, 'color'> {
   children: ReactNode;
   color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info' | 'default';
   size?: 'small' | 'medium' | 'large';
@@ -15,7 +15,7 @@ interface ButtonProps extends Omit<MuiButtonProps, 'color'> {
 // Создаем стилизованный компонент на основе MUI Button
 const StyledButton = styled(MuiButton)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
-  fontWeight: 500,
+  fontWeight: 700,
   textTransform: 'none', // Убираем капитализацию текста
   boxShadow: 'none',
   '&:hover': {
