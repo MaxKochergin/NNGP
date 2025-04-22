@@ -1,0 +1,95 @@
+/* styles.module.css */
+
+/* Блок */
+.heroBanner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 50px 24px;
+    background-color: #f8f9fa;
+    min-height: 50vh;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.heroBanner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/path/to/background-pattern.svg');
+    background-size: cover;
+    opacity: 0.04;
+    z-index: 0;
+}
+
+/* Элементы */
+.heroBanner__content {
+    max-width: 960px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.heroBanner__title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 24px;
+    background: linear-gradient(90deg, #2c3e50 0%, #4a6572 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.heroBanner__description {
+    font-size: 1.25rem;
+    line-height: 1.6;
+    margin-bottom: 36px;
+    color: #4a6572;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.heroBanner__button {
+    margin-top: 16px;
+}
+
+/* Медиа-запросы для адаптивности */
+@media (max-width: 768px) {
+    .heroBanner__title {
+        font-size: 2.5rem;
+    }
+
+    .heroBanner__description {
+        font-size: 1.1rem;
+    }
+
+    .heroBanner {
+        padding: 60px 16px;
+        min-height: 60vh;
+    }
+}
+
+@media (max-width: 480px) {
+    .heroBanner__title {
+        font-size: 2rem;
+    }
+
+    .heroBanner__description {
+        font-size: 1rem;
+    }
+
+    .heroBanner {
+        padding: 40px 16px;
+        min-height: 50vh;
+    }
+}
