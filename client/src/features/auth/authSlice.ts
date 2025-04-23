@@ -6,12 +6,25 @@ import { authApiSlice } from './authApiSlice';
 // Получаем токен из localStorage, если он есть
 const token = localStorage.getItem('token');
 
+// Функция для определения базового маршрута по роли
+const getDefaultPathByRole = (roles?: string[]): string => {
+  if (!roles || roles.length === 0) return '/';
+
+  if (roles.includes('admin')) return '/admin/panel';
+  if (roles.includes('hr')) return '/hr/profile';
+  if (roles.includes('employee')) return '/employee/profile';
+  if (roles.includes('candidate')) return '/candidate/profile';
+
+  return '/';
+};
+
 const initialState: AuthState = {
   user: null,
   token: token,
   isAuthenticated: !!token,
   isLoading: false,
   error: null,
+  defaultPath: '/',
 };
 
 const authSlice = createSlice({
@@ -23,6 +36,11 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       localStorage.removeItem('token');
+    },
+    setDefaultPath: state => {
+      if (!state.user || !state.user.roles) return;
+
+      state.defaultPath = getDefaultPathByRole(state.user.roles);
     },
   },
   // Добавляем extraReducers для обработки результатов API запросов
@@ -50,6 +68,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, setDefaultPath } = authSlice.actions;
 
 export default authSlice.reducer;
