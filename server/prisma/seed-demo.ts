@@ -129,7 +129,7 @@ async function main() {
   }
 
   // 5. Создаем пользователей
-  const defaultPassword = await bcrypt.hash('password123', 10);
+  const defaultPassword = await bcrypt.hash('Password123', 10);
 
   const users = [
     // Администратор

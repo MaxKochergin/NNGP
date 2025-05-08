@@ -1,5 +1,5 @@
 // client/src/components/layouts/Protected/Layout.tsx
-import { useState, ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Box, Toolbar, useMediaQuery, useTheme } from '@mui/material';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
@@ -12,29 +12,30 @@ const drawerWidth = 260;
 
 export const ProtectedLayout = ({ children }: ProtectedLayoutProps) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobileView = useMediaQuery('(max-width:600px)');
   const [mobileOpen, setMobileOpen] = useState(false);
-  
+
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      <Header onToggleSidebar={handleDrawerToggle} />
-      
-      <Sidebar 
-        open={mobileOpen} 
-        onClose={handleDrawerToggle} 
-        drawerWidth={drawerWidth} 
+      <Header onToggleSidebar={handleDrawerToggle} isMobileView={isMobileView} />
+
+      <Sidebar
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        drawerWidth={drawerWidth}
+        isMobileView={isMobileView}
       />
-      
+
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          width: { md: `calc(100% - ${drawerWidth}px)` },
+          p: 0,
+          width: isMobileView ? '100%' : `calc(100% - ${drawerWidth}px)`,
           maxWidth: '100%',
         }}
       >

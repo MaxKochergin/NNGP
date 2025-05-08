@@ -1,14 +1,20 @@
 // client/src/features/auth/hooks/useRegisterForm.ts
-import { useForm} from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import * as yup from 'yup';
 import { useRegisterMutation } from '../authApiSlice';
 
 // Схема валидации для формы регистрации
 const registerSchema = yup.object({
-  firstName: yup.string().required('Имя обязательно').max(10, 'Имя не должно превышать 10 символов'),
-  lastName: yup.string().required('Фамилия обязательна').max(15, 'Фамилия не должна превышать 10 символов'),
+  firstName: yup
+    .string()
+    .required('Имя обязательно')
+    .max(10, 'Имя не должно превышать 10 символов'),
+  lastName: yup
+    .string()
+    .required('Фамилия обязательна')
+    .max(15, 'Фамилия не должна превышать 10 символов'),
   email: yup
     .string()
     .email('Введите корректный email')
@@ -64,7 +70,7 @@ export const useRegisterForm = () => {
   const onSubmit = async (data: RegisterFormInputs) => {
     // Удаляем confirmPassword перед отправкой
     const { confirmPassword, ...registerData } = data;
-    
+
     try {
       await registerUser(registerData).unwrap();
       navigate('/auth/login'); // Перенаправление после успешной регистрации

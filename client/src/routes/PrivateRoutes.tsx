@@ -1,205 +1,116 @@
 // client/src/routes/PrivateRoutes.tsx
-import { RouteObject } from 'react-router-dom';
-import { AuthGuard } from '../components/auth/AuthGuard';
-// import AdminPanel from '../pages/admin/Panel';
-// import RolesManagement from '../pages/admin/RolesManagement';
-// import SystemSettings from '../pages/admin/SystemSettings';
-// import AnalyticsDetails from '../pages/analytics/Details';
-// import AnalyticsReports from '../pages/analytics/Reports';
-// import CandidateProfile from '../pages/candidate/Profile';
-// import EmployeeProfile from '../pages/employee/Profile';
-// import CandidateDetails from '../pages/hr/CandidateDetails';
-// import Candidates from '../pages/hr/Candidates';
-// import EmployeeDetails from '../pages/hr/EmployeeDetails';
-// import Employees from '../pages/hr/Employees';
-// import HRProfile from '../pages/hr/Profile';
-// import LearningMaterials from '../pages/learning/Materials';
-// import Settings from '../pages/settings/Settings';
-// import AvailableTests from '../pages/tests/AvailableTests';
-// import TestDetails from '../pages/tests/TestDetails';
-// import TestHistory from '../pages/tests/TestHistory';
+import { Navigate, Outlet, RouteObject } from 'react-router-dom';
+import AdminLayout from '../components/layouts/admin/AdminLayout';
+import CandidateLayout from '../components/layouts/candidate/CandidateLayout';
+import EmployeeLayout from '../components/layouts/employee/EmployeeLayout';
+import HrLayout from '../components/layouts/hr/HrLayout';
+import { adminRoutes } from './AdminRoutes';
+import { candidateRoutes } from './CandidateRoutes';
+import { commonRoutes } from './CommonRoutes';
+import { employeeRoutes } from './EmployeeRoutes';
+import { hrRoutes } from './HrRoutes';
 
+/**
+ * Структура приватных маршрутов:
+ *
+ * /app - Основной маршрут для авторизованных пользователей с разными лейаутами по ролям
+ *   |- index - Перенаправление на /app/candidate/profile
+ *   |
+ *   |- /candidate - Маршруты кандидата (из CandidateRoutes.tsx)
+ *   |    |- index - Перенаправление на /app/candidate/profile
+ *   |    |- /profile - Профиль кандидата
+ *   |    |    |- index - Перенаправление на /app/candidate/profile/basicInfo
+ *   |    |    |- /basicInfo - Основная информация
+ *   |    |    |- /experience - Опыт работы
+ *   |    |    |- /education - Образование
+ *   |    |    |- /skills - Навыки
+ *   |    |- /tests
+ *   |    |    |- /available - Доступные тесты для кандидата
+ *   |    |    |- /history - История тестов кандидата
+ *   |    |- /learning
+ *   |         |- /materials - Учебные материалы для кандидата
+ *   |         |- /courses - Курсы для кандидата
+ *   |
+ *   |- /employee - Маршруты сотрудника (из EmployeeRoutes.tsx)
+ *   |    |- index - Перенаправление на /app/employee/profile
+ *   |    |- /profile - Профиль сотрудника
+ *   |    |- /tests
+ *   |    |    |- /available - Доступные тесты для сотрудника
+ *   |    |    |- /history - История тестов сотрудника
+ *   |    |    |- /assessment - Оценка компетенций сотрудника
+ *   |    |- /learning
+ *   |         |- /materials - Учебные материалы для сотрудника
+ *   |         |- /courses - Курсы повышения квалификации
+ *   |         |- /webinars - Вебинары для сотрудников
+ *   |
+ *   |- /hr - Маршруты HR-специалиста (из HrRoutes.tsx)
+ *   |    |- index - Перенаправление на /app/hr/profile
+ *   |    |- /profile - Профиль HR
+ *   |    |- /candidates - Список кандидатов
+ *   |    |- /employees - Список сотрудников
+ *   |    |- /tests
+ *   |    |    |- /management - Управление тестами
+ *   |    |    |- /results - Результаты тестирования
+ *   |    |    |- /analytics - Аналитика по результатам тестов
+ *   |    |- /learning
+ *   |         |- /management - Управление учебными материалами
+ *   |         |- /assignments - Назначение курсов сотрудникам
+ *   |         |- /statistics - Статистика обучения
+ *   |
+ *   |- /admin - Маршруты администратора (из AdminRoutes.tsx)
+ *   |    |- index - Перенаправление на /app/admin/panel
+ *   |    |- /panel - Панель администратора
+ *   |    |- /roles - Управление ролями
+ *   |    |- /settings - Настройки системы
+ *   |    |- /content
+ *   |    |    |- /tests - Управление тестами (Admin)
+ *   |    |    |- /learning - Управление учебными материалами (Admin)
+ *   |    |    |- /notifications - Управление уведомлениями
+ *   |    |- /system
+ *   |         |- /users - Управление пользователями
+ *   |         |- /logs - Системные логи
+ *   |         |- /backup - Резервное копирование
+ *   |
+ *   |- /settings - Настройки пользователя (из CommonRoutes.tsx)
+ *   |- /notifications - Уведомления пользователя (из CommonRoutes.tsx)
+ *   |- /help - Справка и поддержка (из CommonRoutes.tsx)
+ */
 export const privateRoutes: RouteObject[] = [
-  // Профили по ролям
+  // Корневой маршрут с перенаправлением
   {
-    path: '/candidate',
-    children: [
-      {
-        path: 'profile',
-        element: (
-          <AuthGuard requiredRoles={['candidate']}>
-            <CandidateProfile />
-          </AuthGuard>
-        ),
-      },
-    ],
+    path: '/app',
+    element: <Navigate to="/app/candidate/profile" />,
   },
-//   {
-//     path: '/employee',
-//     children: [
-//       {
-//         path: 'profile',
-//         element: (
-//           <AuthGuard requiredRoles={['employee']}>
-//             <EmployeeProfile />
-//           </AuthGuard>
-//         ),
-//       },
-//     ],
-//   },
-//   {
-//     path: '/hr',
-//     children: [
-//       {
-//         path: 'profile',
-//         element: (
-//           <AuthGuard requiredRoles={['hr', 'admin']}>
-//             <HRProfile />
-//           </AuthGuard>
-//         ),
-//       },
-//       {
-//         path: 'candidates',
-//         element: (
-//           <AuthGuard requiredRoles={['hr', 'admin']}>
-//             <Candidates />
-//           </AuthGuard>
-//         ),
-//       },
-//       {
-//         path: 'candidates/:candidateId',
-//         element: (
-//           <AuthGuard requiredRoles={['hr', 'admin']}>
-//             <CandidateDetails />
-//           </AuthGuard>
-//         ),
-//       },
-//       {
-//         path: 'employees',
-//         element: (
-//           <AuthGuard requiredRoles={['hr', 'admin']}>
-//             <Employees />
-//           </AuthGuard>
-//         ),
-//       },
-//       {
-//         path: 'employees/:employeeId',
-//         element: (
-//           <AuthGuard requiredRoles={['hr', 'admin']}>
-//             <EmployeeDetails />
-//           </AuthGuard>
-//         ),
-//       },
-//     ],
-//   },
 
-//   // Общие настройки
-//   {
-//     path: '/settings',
-//     element: (
-//       <AuthGuard>
-//         <Settings />
-//       </AuthGuard>
-//     ),
-//   },
+  // Маршруты кандидата в CandidateLayout
+  {
+    path: '/app/candidate',
+    element: <CandidateLayout />,
+    children: candidateRoutes.children,
+  },
 
-//   // Тесты
-//   {
-//     path: '/tests',
-//     children: [
-//       {
-//         path: 'available',
-//         element: (
-//           <AuthGuard requiredRoles={['candidate', 'employee']}>
-//             <AvailableTests />
-//           </AuthGuard>
-//         ),
-//       },
-//       {
-//         path: 'history',
-//         element: (
-//           <AuthGuard>
-//             <TestHistory />
-//           </AuthGuard>
-//         ),
-//       },
-//       {
-//         path: ':testId',
-//         element: (
-//           <AuthGuard>
-//             <TestDetails />
-//           </AuthGuard>
-//         ),
-//       },
-//     ],
-//   },
+  // Маршруты сотрудника в EmployeeLayout
+  {
+    path: '/app/employee',
+    element: <EmployeeLayout />,
+    children: employeeRoutes.children,
+  },
 
-//   // Учебные материалы
-//   {
-//     path: '/learning',
-//     children: [
-//       {
-//         path: 'materials',
-//         element: (
-//           <AuthGuard requiredRoles={['candidate', 'employee']}>
-//             <LearningMaterials />
-//           </AuthGuard>
-//         ),
-//       },
-//     ],
-//   },
+  // Маршруты HR в HrLayout
+  {
+    path: '/app/hr',
+    element: <HrLayout />,
+    children: hrRoutes.children,
+  },
 
-//   // Аналитика
-//   {
-//     path: '/analytics',
-//     children: [
-//       {
-//         path: 'reports',
-//         element: (
-//           <AuthGuard requiredRoles={['hr', 'admin']}>
-//             <AnalyticsReports />
-//           </AuthGuard>
-//         ),
-//       },
-//       {
-//         path: 'details/:reportId',
-//         element: (
-//           <AuthGuard requiredRoles={['hr', 'admin']}>
-//             <AnalyticsDetails />
-//           </AuthGuard>
-//         ),
-//       },
-//     ],
-//   },
+  // Маршруты администратора в AdminLayout
+  {
+    path: '/app/admin',
+    element: <AdminLayout />,
+    children: adminRoutes.children,
+  },
 
-//   // Администрирование
-//   {
-//     path: '/admin',
-//     children: [
-//       {
-//         path: 'panel',
-//         element: (
-//           <AuthGuard requiredRoles={['admin']}>
-//             <AdminPanel />
-//           </AuthGuard>
-//         ),
-//       },
-//       {
-//         path: 'roles',
-//         element: (
-//           <AuthGuard requiredRoles={['admin']}>
-//             <RolesManagement />
-//           </AuthGuard>
-//         ),
-//       },
-//       {
-//         path: 'settings',
-//         element: (
-//           <AuthGuard requiredRoles={['admin']}>
-//             <SystemSettings />
-//           </AuthGuard>
-//         ),
-//       },
-//     ],
-//   },
+
+  // Общие маршруты с CandidateLayout по умолчанию
+
 ];

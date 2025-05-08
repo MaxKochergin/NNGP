@@ -21,70 +21,80 @@ export interface NavigationItem {
 export const navigationItems: NavigationItem[] = [
   {
     title: 'Профиль кандидата',
-    path: '/candidate/profile',
+    path: '/app/candidate/profile',
     icon: PersonIcon,
     roles: ['candidate'],
   },
   {
     title: 'Профиль сотрудника',
-    path: '/employee/profile',
+    path: '/app/employee/profile',
     icon: PersonIcon,
     roles: ['employee'],
   },
   {
     title: 'Доступные тесты',
-    path: '/tests/available',
+    path: '/app/tests/available',
     icon: AssignmentIcon,
     roles: ['candidate', 'employee'],
   },
   {
     title: 'История тестов',
-    path: '/tests/history',
+    path: '/app/tests/history',
     icon: AssignmentIcon,
     roles: ['candidate', 'employee', 'hr'],
   },
   {
     title: 'Учебные материалы',
-    path: '/learning/materials',
+    path: '/app/learning/materials',
     icon: SchoolIcon,
-    roles: ['candidate', 'employee'],
+    roles: ['employee'],
   },
   {
     title: 'Кандидаты',
-    path: '/hr/candidates',
+    path: '/app/hr/candidates',
     icon: GroupIcon,
     roles: ['hr', 'admin'],
   },
   {
     title: 'Сотрудники',
-    path: '/hr/employees',
+    path: '/app/hr/employees',
     icon: BusinessIcon,
     roles: ['hr', 'admin'],
   },
   {
     title: 'Аналитика',
-    path: '/analytics/reports',
+    path: '/app/analytics/reports',
     icon: BarChartIcon,
     roles: ['hr', 'admin'],
   },
   {
     title: 'Управление',
-    path: '/admin/panel',
+    path: '/app/admin/panel',
     icon: AdminIcon,
     roles: ['admin'],
   },
   {
     title: 'Настройки',
-    path: '/settings',
+    path: '/app/settings',
     icon: SettingsIcon,
     // Доступно всем пользователям
   },
 ];
 
-// Функция, которая фильтрует элементы навигации по ролям пользователя - остается без изменений
+// Функция, которая фильтрует элементы навигации по ролям пользователя
 export const getNavigationItems = (userRoles: string[]) => {
   return navigationItems.filter(item => {
     if (!item.roles) return true;
     return userRoles.some(role => item.roles?.includes(role));
   });
+};
+
+// Функция, которая может динамически генерировать элементы навигации для конкретного пользователя
+export const getDynamicNavigationItems = (userRoles: string[]) => {
+  const baseItems = getNavigationItems(userRoles);
+
+  // Здесь можно добавить дополнительную логику для динамического изменения
+  // элементов навигации в зависимости от ролей пользователя
+
+  return baseItems;
 };

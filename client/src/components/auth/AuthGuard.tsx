@@ -12,10 +12,10 @@ interface AuthGuardProps {
 const getDefaultRouteByRole = (roles: string[] | undefined): string => {
   if (!roles || roles.length === 0) return '/';
 
-  if (roles.includes('admin')) return '/admin/panel';
-  if (roles.includes('hr')) return '/hr/profile';
-  if (roles.includes('employee')) return '/employee/profile';
-  if (roles.includes('candidate')) return '/candidate/profile';
+  if (roles.includes('admin')) return '/app/admin/panel';
+  if (roles.includes('hr')) return '/app/hr/profile';
+  if (roles.includes('employee')) return '/app/employee/profile';
+  if (roles.includes('candidate')) return '/app/candidate/profile';
 
   return '/';
 };

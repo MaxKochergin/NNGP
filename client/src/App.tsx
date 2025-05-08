@@ -1,11 +1,14 @@
-import { RouterProvider } from "react-router-dom";
-import { AppRouter } from "./routes/AppRouter";
+import { RouterProvider } from 'react-router-dom';
+import AuthInitializer from './components/auth/AuthInitializer';
+import { AppRouter } from './routes/AppRouter';
 
 function App() {
   return (
-    <RouterProvider router={AppRouter} />
+    <>
+      <AuthInitializer />
+      <RouterProvider router={AppRouter} />
+    </>
   );
 }
 
 export default App;
-
