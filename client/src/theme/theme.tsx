@@ -6,6 +6,8 @@ const theme = createTheme({
     primary: {
       main: '#3b82f6',
       dark: '#2563eb',
+      light: '#60a5fa',
+      lighter: '#e0ecff',
     },
     secondary: {
       main: '#64748b',
@@ -67,22 +69,27 @@ const theme = createTheme({
 });
 
 // Вариант с поддержкой темной темы
-export const getTheme = (mode: 'light' | 'dark') => createTheme({
-  ...theme,
-  palette: {
-    ...theme.palette,
-    mode,
-    ...(mode === 'dark' && {
-      text: {
-        primary: '#f8fafc',
-        secondary: '#94a3b8',
-      },
-      background: {
-        default: '#0f172a',
-        paper: '#1e293b',
-      },
-    }),
-  },
-});
+export const getTheme = (mode: 'light' | 'dark') =>
+  createTheme({
+    ...theme,
+    palette: {
+      ...theme.palette,
+      mode,
+      ...(mode === 'dark' && {
+        text: {
+          primary: '#f8fafc',
+          secondary: '#94a3b8',
+        },
+        background: {
+          default: '#0f172a',
+          paper: '#1e293b',
+        },
+        primary: {
+          ...theme.palette.primary,
+          lighter: '#1e3a8a',
+        },
+      }),
+    },
+  });
 
 export default theme;

@@ -28,13 +28,13 @@ import Image from '../../common/Image';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
+  isMobileView: boolean;
 }
 
-export const Header = ({ onToggleSidebar }: HeaderProps) => {
+export const Header = ({ onToggleSidebar, isMobileView }: HeaderProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
@@ -109,7 +109,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
       }}
     >
       <Toolbar>
-        {isMobile && (
+        {isMobileView && (
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -122,7 +122,12 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
         )}
 
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Image src={logo} alt="ННГП" width={isMobile ? 32 : 42} height={isMobile ? 32 : 42} />
+          <Image
+            src={logo}
+            alt="ННГП"
+            width={isMobileView ? 32 : 42}
+            height={isMobileView ? 32 : 42}
+          />
           <Typography
             variant="h6"
             noWrap

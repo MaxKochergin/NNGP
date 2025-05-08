@@ -33,10 +33,10 @@ export type LoginFormInputs = {
 const getDefaultRouteByRole = (roles: string[] | undefined): string => {
   if (!roles || roles.length === 0) return '/';
 
-  if (roles.includes('admin')) return '/admin/panel';
-  if (roles.includes('hr')) return '/hr/profile';
-  if (roles.includes('employee')) return '/employee/profile';
-  if (roles.includes('candidate')) return '/candidate/profile';
+  if (roles.includes('admin')) return '/app/admin';
+  if (roles.includes('hr')) return '/app/hr';
+  if (roles.includes('employee')) return '/app/employee';
+  if (roles.includes('candidate')) return '/app/candidate';
 
   return '/';
 };
