@@ -28,8 +28,21 @@ export const authApiSlice = apiSlice.injectEndpoints({
       query: () => '/auth/profile',
       providesTags: ['User'],
     }),
+
+    forgotPassword: builder.mutation<{ message: string }, { email: string }>({
+      query: credentials => ({
+        url: '/auth/forgot-password',
+        method: 'POST',
+        body: credentials,
+      }),
+    }),
   }),
 });
 
 // Экспорт сгенерированных хуков
-export const { useLoginMutation, useRegisterMutation, useGetProfileQuery } = authApiSlice;
+export const {
+  useLoginMutation,
+  useRegisterMutation,
+  useGetProfileQuery,
+  useForgotPasswordMutation,
+} = authApiSlice;
