@@ -25,7 +25,14 @@ export const authApiSlice = apiSlice.injectEndpoints({
 
     // Endpoint для получения профиля текущего пользователя
     getProfile: builder.query<any, void>({
-      query: () => '/auth/profile',
+      query: () => {
+        console.log('Запрашиваем профиль пользователя');
+        console.log(
+          'Полный URL запроса:',
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/auth/profile`
+        );
+        return '/auth/profile';
+      },
       providesTags: ['User'],
     }),
 

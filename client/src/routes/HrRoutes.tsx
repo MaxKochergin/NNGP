@@ -1,6 +1,13 @@
-import { Navigate, Outlet, RouteObject } from 'react-router-dom';
+import { Navigate, Outlet} from 'react-router-dom';
 import RoleBasedRoute from '../components/auth/RoleBasedRoute';
-
+import HrProfile from '../pages/hr/HrProfile';
+import BasicInfoHr from '../pages/hr/BasicInfoHr';
+import HrProfileExperience from '../pages/hr/HrProfileExperience';
+import HrProfileEducation from '../pages/hr/HrProfileEducation';
+import HrProfileSkills from '../pages/hr/HrProfileSkills';
+import NotificationsHr from '../pages/hr/NotificationsHr';  
+import Settings from '../pages/hr/Settings';
+import Help from '../pages/hr/Help';
 // Импорт компонентов HR
 // Замените этот комментарий на реальный импорт, когда создадите компоненты
 // import HRProfile from '../pages/hr/Profile';
@@ -24,8 +31,30 @@ const hrRoute = {
       path: 'profile',
       element: (
         // Временная заглушка, замените на реальный компонент
-        <div>Профиль HR-специалиста (в разработке)</div>
+        <HrProfile />
       ),
+      children:[
+        {
+          index: true,
+          element: <Navigate to="/app/hr/profile/basicInfo" />,
+        },
+        {
+          path: 'basicInfo',
+          element: <BasicInfoHr />,
+        },
+        {
+          path: 'experience',
+          element: <HrProfileExperience />,
+        },
+        {
+          path: 'education',
+          element: <HrProfileEducation />,
+        },
+        {
+          path: 'skills',
+          element: <HrProfileSkills />,
+        },
+      ],
     },
     {
       path: 'candidates',
@@ -76,6 +105,18 @@ const hrRoute = {
           element: <div>Статистика обучения (в разработке)</div>,
         },
       ],
+    },
+    {
+      path: 'notifications',
+      element: <NotificationsHr />,
+    },  
+    {
+      path: 'settings',
+      element: <Settings />,
+    },
+    {
+      path: 'help',
+      element: <Help />,
     },
     // Здесь можно добавить другие подмаршруты для HR
   ],

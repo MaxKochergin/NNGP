@@ -60,7 +60,7 @@ export const EmployeeHeader = ({ onToggleSidebar, isMobileView }: EmployeeHeader
 
   const handleSettingsClick = () => {
     handleMenuClose();
-    navigate('/app/settings');
+    navigate('/app/employee/settings');
   };
 
   // Функция для получения инициалов пользователя

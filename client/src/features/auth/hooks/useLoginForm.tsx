@@ -61,15 +61,31 @@ export const useLoginForm = () => {
   // Обработчик отправки формы
   const onSubmit = async (data: LoginFormInputs) => {
     try {
+      console.log('🔐 Попытка входа с данными:', { email: data.email });
       const result = await login(data).unwrap();
+
+      console.log('✅ Успешный вход, результат:', result);
+      console.log('🔑 Токен получен:', !!result.access_token);
+      console.log('👤 Данные пользователя:', result.user);
+
+      // Сохраняем токен в localStorage - для отладки
+      if (result.access_token) {
+        console.log('💾 Сохраняем токен в localStorage');
+        localStorage.setItem('token_debug', result.access_token);
+      }
+
       // Получаем роли пользователя из результата авторизации
       const userRoles = result.user?.roles || [];
+      console.log('🛡️ Роли пользователя:', userRoles);
+
       // Определяем маршрут перенаправления в зависимости от роли
       const redirectRoute = getDefaultRouteByRole(userRoles);
+      console.log('🔄 Перенаправление на:', redirectRoute);
+
       navigate(redirectRoute); // Перенаправление после успешного входа
     } catch (err) {
       // Обработка ошибок выполняется RTK Query
-      console.error('Ошибка входа:', err);
+      console.error('❌ Ошибка входа:', err);
     }
   };
 

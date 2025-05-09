@@ -1,12 +1,11 @@
 // client/src/routes/PrivateRoutes.tsx
-import { Navigate, Outlet, RouteObject } from 'react-router-dom';
+import { Navigate, RouteObject } from 'react-router-dom';
 import AdminLayout from '../components/layouts/admin/AdminLayout';
 import CandidateLayout from '../components/layouts/candidate/CandidateLayout';
 import EmployeeLayout from '../components/layouts/employee/EmployeeLayout';
 import HrLayout from '../components/layouts/hr/HrLayout';
 import { adminRoutes } from './AdminRoutes';
 import { candidateRoutes } from './CandidateRoutes';
-import { commonRoutes } from './CommonRoutes';
 import { employeeRoutes } from './EmployeeRoutes';
 import { hrRoutes } from './HrRoutes';
 
