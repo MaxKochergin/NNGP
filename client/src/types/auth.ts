@@ -22,12 +22,13 @@ export interface ResetPasswordDto {
 }
 
 export interface AuthResponse {
-  accessToken: string;
+  access_token: string;
   user: {
     id: string;
     email: string;
     firstName?: string;
     lastName?: string;
+    fullName?: string;
     roles?: string[];
   };
 }

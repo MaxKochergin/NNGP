@@ -1,6 +1,16 @@
-import { Navigate, Outlet, RouteObject } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import RoleBasedRoute from '../components/auth/RoleBasedRoute';
-
+import AvailableTests from '../pages/candidate/AvailableTests';
+import BasicInfoEmployee from '../pages/employee/BasicInfoEmployee';
+import CompletedTestEmployee from '../pages/employee/CompletedTestEmployee';
+import EmployerProfile from '../pages/employee/EmployerProfile';
+import EmployerProfileEducation from '../pages/employee/EmployerProfileEducation';
+import EmployerProfileExperience from '../pages/employee/EmployerProfileExperience';
+import EmployerProfileSkills from '../pages/employee/EmployerProfileSkills';
+import LearningMaterials from '../pages/employee/LearningMaterials';
+import Settings from '../pages/employee/Settings';
+import Help from '../pages/employee/Help';
+import NotificationsEmployee from '../pages/employee/NotificationsEmployee';
 // Импорт компонентов сотрудника
 // Замените этот комментарий на реальный импорт, когда создадите компоненты
 // import EmployeeProfile from '../pages/employee/EmployeeProfile';
@@ -21,10 +31,29 @@ const employeeRoute = {
     },
     {
       path: 'profile',
-      element: (
-        // Временная заглушка, замените на реальный компонент
-        <div>Профиль сотрудника (в разработке)</div>
-      ),
+      element: <EmployerProfile />,
+      children: [
+        {
+          index: true,
+          element: <Navigate to="/app/employee/profile/basicInfo" />,
+        },
+        {
+          path: 'basicInfo',
+          element: <BasicInfoEmployee />,
+        },
+        {
+          path: 'experience',
+          element: <EmployerProfileExperience />,
+        },
+        {
+          path: 'education',
+          element: <EmployerProfileEducation />,
+        },
+        {
+          path: 'skills',
+          element: <EmployerProfileSkills />,
+        },
+      ],
     },
     // Маршруты для тестов сотрудника
     {
@@ -32,15 +61,11 @@ const employeeRoute = {
       children: [
         {
           path: 'available',
-          element: <div>Доступные тесты для сотрудников (в разработке)</div>,
+          element: <AvailableTests />,
         },
         {
           path: 'history',
-          element: <div>История тестов сотрудника (в разработке)</div>,
-        },
-        {
-          path: 'assessment',
-          element: <div>Оценка компетенций сотрудника (в разработке)</div>,
+          element: <CompletedTestEmployee />,
         },
       ],
     },
@@ -50,7 +75,7 @@ const employeeRoute = {
       children: [
         {
           path: 'materials',
-          element: <div>Учебные материалы для сотрудников (в разработке)</div>,
+          element: <LearningMaterials />,
         },
         {
           path: 'courses',
@@ -62,10 +87,21 @@ const employeeRoute = {
         },
       ],
     },
+    {
+      path: 'settings',
+      element: <Settings />,
+    },
+    {
+      path: 'help',
+      element: <Help />,
+    },
+    {
+      path: 'notifications',
+      element: <NotificationsEmployee />,
+    },
     // Здесь можно добавить другие подмаршруты для сотрудника
   ],
 };
 
 // Экспортируем сам объект для использования в PrivateRoutes
 export const employeeRoutes = employeeRoute;
- 

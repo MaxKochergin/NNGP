@@ -35,7 +35,7 @@ export const hrNavigationItems: NavigationItem[] = [
     icon: BusinessIcon,
   },
   {
-    title: 'Тестирование',
+    title: 'Тесты',
     path: '/app/hr/tests/management',
     icon: AssignmentIcon,
   },
@@ -61,17 +61,17 @@ export const hrNavigationItems: NavigationItem[] = [
   },
   {
     title: 'Уведомления',
-    path: '/app/notifications',
+    path: '/app/hr/notifications',
     icon: NotificationsIcon,
   },
   {
     title: 'Настройки',
-    path: '/app/settings',
+    path: '/app/hr/settings',
     icon: SettingsIcon,
   },
   {
     title: 'Помощь',
-    path: '/app/help',
+    path: '/app/hr/help',
     icon: HelpIcon,
   },
 ];

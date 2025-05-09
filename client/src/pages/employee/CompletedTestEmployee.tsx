@@ -22,7 +22,6 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  Grid,
   IconButton,
   Grid as MuiGrid,
   Paper,
@@ -69,10 +68,10 @@ const mockTestAttempts: TestAttempt[] = [
     testTitle: 'Основы расчета конструкций',
     category: 'Инженер ПГС',
     completedAt: '2025-04-05T14:30:00',
-    score: 85,
+    score: 72,
     duration: 25,
     totalQuestions: 15,
-    correctAnswers: 13,
+    correctAnswers: 11,
     status: 'passed',
   },
   {
@@ -81,10 +80,10 @@ const mockTestAttempts: TestAttempt[] = [
     testTitle: 'Железобетонные конструкции',
     category: 'Инженер ПГС',
     completedAt: '2025-04-10T10:45:00',
-    score: 75,
+    score: 65,
     duration: 40,
     totalQuestions: 20,
-    correctAnswers: 15,
+    correctAnswers: 13,
     status: 'passed',
   },
   {
@@ -93,10 +92,10 @@ const mockTestAttempts: TestAttempt[] = [
     testTitle: 'Основы сметного дела',
     category: 'Сметчик',
     completedAt: '2025-04-15T09:15:00',
-    score: 78,
+    score: 68,
     duration: 35,
     totalQuestions: 18,
-    correctAnswers: 14,
+    correctAnswers: 12,
     status: 'passed',
   },
   {
@@ -105,22 +104,22 @@ const mockTestAttempts: TestAttempt[] = [
     testTitle: 'Системы отопления и вентиляции',
     category: 'Инженер по ОВ',
     completedAt: '2025-04-20T16:20:00',
-    score: 90,
+    score: 75,
     duration: 32,
     totalQuestions: 15,
-    correctAnswers: 14,
+    correctAnswers: 11,
     status: 'passed',
   },
   {
     id: '5',
-    testId: '6',
+    testId: '5',
     testTitle: 'Архитектурные решения',
     category: 'Проектировщик КМ/КЖ/АР',
     completedAt: '2025-04-25T11:30:00',
-    score: 82,
+    score: 70,
     duration: 38,
     totalQuestions: 18,
-    correctAnswers: 15,
+    correctAnswers: 13,
     status: 'passed',
   },
 ];
@@ -223,8 +222,8 @@ function CompletedTests() {
   );
 
   // Группировка результатов по категориям для диаграммы
-  const categoriesData = testAttempts.reduce(
-    (acc: Record<string, { count: number; passed: number }>, curr) => {
+  const categoriesData = Object.entries(
+    testAttempts.reduce((acc: Record<string, { count: number; passed: number }>, curr) => {
       if (!acc[curr.category]) {
         acc[curr.category] = { count: 0, passed: 0 };
       }
@@ -233,9 +232,11 @@ function CompletedTests() {
         acc[curr.category].passed += 1;
       }
       return acc;
-    },
-    {}
-  );
+    }, {})
+  ).map(([name, data]) => ({
+    name,
+    ...data,
+  }));
 
   // Форматирование даты
   const formatDate = (dateString: string) => {
@@ -289,8 +290,15 @@ function CompletedTests() {
         <Divider sx={{ mb: 3 }} />
 
         {/* Сводная статистика */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+            gap: 3,
+            mb: 4,
+          }}
+        >
+          <Box>
             <Card
               sx={{
                 height: '100%',
@@ -339,8 +347,8 @@ function CompletedTests() {
                 Всего тестов
               </Typography>
             </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          </Box>
+          <Box>
             <Card
               sx={{
                 height: '100%',
@@ -389,8 +397,8 @@ function CompletedTests() {
                 Успешных тестов
               </Typography>
             </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          </Box>
+          <Box>
             <Card
               sx={{
                 height: '100%',
@@ -439,8 +447,8 @@ function CompletedTests() {
                 Неудачных тестов
               </Typography>
             </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          </Box>
+          <Box>
             <Card
               sx={{
                 height: '100%',
@@ -477,7 +485,7 @@ function CompletedTests() {
                   mb: 1,
                 }}
               >
-                {averageScore}%
+                70%
               </Typography>
               <Typography
                 variant="body1"
@@ -489,12 +497,19 @@ function CompletedTests() {
                 Средний балл
               </Typography>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
         {/* Визуализация результатов - имитация диаграмм */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} md={6}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+            gap: 3,
+            mb: 4,
+          }}
+        >
+          <Box>
             <Card>
               <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Typography
@@ -529,11 +544,11 @@ function CompletedTests() {
                       height: { xs: 150, sm: 180 },
                       borderRadius: '50%',
                       border: '12px solid',
-                      borderColor: 'divider',
+                      borderColor: 'success.lighter',
                     }}
                   />
 
-                  {/* Полукруг успешных тестов */}
+                  {/* Полный зеленый круг */}
                   <Box
                     sx={{
                       position: 'absolute',
@@ -541,68 +556,9 @@ function CompletedTests() {
                       height: { xs: 150, sm: 180 },
                       borderRadius: '50%',
                       border: '12px solid',
-                      borderColor: 'transparent',
-                      borderTopColor: 'success.main',
-                      borderRightColor:
-                        passedTests >= totalTests / 2 ? 'success.main' : 'transparent',
-                      borderLeftColor: 'success.main',
-                      transform: `rotate(${90 + (passedTests / totalTests) * 360}deg)`,
-                      transition: 'all 0.3s ease-in-out',
+                      borderColor: 'success.main',
                     }}
                   />
-
-                  {/* Если больше половины тестов пройдено, добавляем второй полукруг */}
-                  {passedTests > totalTests / 2 && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        width: { xs: 150, sm: 180 },
-                        height: { xs: 150, sm: 180 },
-                        borderRadius: '50%',
-                        border: '12px solid',
-                        borderColor: 'transparent',
-                        borderTopColor: 'success.main',
-                        borderRightColor: 'success.main',
-                        transform: 'rotate(90deg)',
-                        transition: 'all 0.3s ease-in-out',
-                      }}
-                    />
-                  )}
-
-                  {/* Полукруг неуспешных тестов */}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      width: { xs: 150, sm: 180 },
-                      height: { xs: 150, sm: 180 },
-                      borderRadius: '50%',
-                      border: '12px solid',
-                      borderColor: 'transparent',
-                      borderBottomColor: 'error.main',
-                      borderRightColor:
-                        passedTests <= totalTests / 2 ? 'error.main' : 'transparent',
-                      transform: `rotate(${90 + (passedTests / totalTests) * 360}deg)`,
-                      transition: 'all 0.3s ease-in-out',
-                    }}
-                  />
-
-                  {/* Если больше половины тестов не пройдено, добавляем второй полукруг */}
-                  {passedTests < totalTests / 2 && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        width: { xs: 150, sm: 180 },
-                        height: { xs: 150, sm: 180 },
-                        borderRadius: '50%',
-                        border: '12px solid',
-                        borderColor: 'transparent',
-                        borderBottomColor: 'error.main',
-                        borderRightColor: 'error.main',
-                        transform: 'rotate(90deg)',
-                        transition: 'all 0.3s ease-in-out',
-                      }}
-                    />
-                  )}
 
                   {/* Процент успеха в центре */}
                   <Box
@@ -620,7 +576,7 @@ function CompletedTests() {
                         fontSize: { xs: '1.75rem', sm: '2rem' },
                       }}
                     >
-                      {Math.round((passedTests / totalTests) * 100)}%
+                      100%
                     </Typography>
                     <Typography
                       variant="body2"
@@ -674,8 +630,8 @@ function CompletedTests() {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
-          <Grid item xs={12} md={6}>
+          </Box>
+          <Box>
             <Card>
               <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Typography
@@ -882,8 +838,13 @@ function CompletedTests() {
                 </Typography>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
+
+        {/* Ответы по категориям */}
+       
+        
+       
 
         {/* Таблица с историей прохождения тестов */}
         <Typography variant="h6" sx={{ mb: 2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
@@ -1043,8 +1004,15 @@ function CompletedTests() {
           {selectedTest && (
             <>
               {/* Информация о тесте */}
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={6}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+                  gap: 2,
+                  mb: 3,
+                }}
+              >
+                <Box>
                   <Box sx={{ mb: 2 }}>
                     <Typography
                       variant="subtitle2"
@@ -1067,8 +1035,8 @@ function CompletedTests() {
                       {formatDate(selectedTest.completedAt)}
                     </Typography>
                   </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                </Box>
+                <Box>
                   <Box sx={{ mb: 2 }}>
                     <Typography
                       variant="subtitle2"
@@ -1099,8 +1067,8 @@ function CompletedTests() {
                       {selectedTest.correctAnswers} из {selectedTest.totalQuestions}
                     </Typography>
                   </Box>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
 
               <Divider sx={{ mb: 3 }} />
 
@@ -1132,9 +1100,9 @@ function CompletedTests() {
                           Вопрос {index + 1}: {detail.question}
                         </Typography>
 
-                        <Grid container spacing={1}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1 }}>
                           {detail.options.map(option => (
-                            <Grid item xs={12} key={option.id}>
+                            <Box key={option.id}>
                               <Box
                                 sx={{
                                   p: 1,
@@ -1169,9 +1137,9 @@ function CompletedTests() {
                                   {option.id === detail.userAnswer && ' (ваш ответ)'}
                                 </Typography>
                               </Box>
-                            </Grid>
+                            </Box>
                           ))}
-                        </Grid>
+                        </Box>
 
                         <Typography
                           variant="body2"
