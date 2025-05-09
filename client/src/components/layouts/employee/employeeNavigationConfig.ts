@@ -23,11 +23,6 @@ export const employeeNavigationItems: NavigationItem[] = [
     icon: PersonIcon,
   },
   {
-    title: 'Компетенции',
-    path: '/app/employee/competencies',
-    icon: BarChartIcon,
-  },
-  {
     title: 'Доступные тесты',
     path: '/app/employee/tests/available',
     icon: AssignmentIcon,
@@ -42,29 +37,20 @@ export const employeeNavigationItems: NavigationItem[] = [
     path: '/app/employee/learning/materials',
     icon: SchoolIcon,
   },
-  {
-    title: 'Курсы',
-    path: '/app/employee/learning/courses',
-    icon: SchoolIcon,
-  },
-  {
-    title: 'Моя команда',
-    path: '/app/employee/team',
-    icon: BusinessIcon,
-  },
+
   {
     title: 'Уведомления',
-    path: '/app/notifications',
+    path: '/app/employee/notifications',
     icon: NotificationsIcon,
   },
   {
     title: 'Настройки',
-    path: '/app/settings',
+    path: '/app/employee/settings',
     icon: SettingsIcon,
   },
   {
     title: 'Помощь',
-    path: '/app/help',
+    path: '/app/employee/help',
     icon: HelpIcon,
   },
 ];

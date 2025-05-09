@@ -1,10 +1,26 @@
 // client/src/features/auth/authSlice.ts
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AuthState } from '../../types/auth';
 import { authApiSlice } from './authApiSlice';
 
-// Получаем токен из localStorage, если он есть
-const token = localStorage.getItem('token');
+// Функция для проверки валидности токена (простая проверка на формат)
+const isValidToken = (token: string | null): boolean => {
+  if (!token) return false;
+
+  // Проверяем, что токен имеет формат JWT (три части, разделенные точками)
+  const parts = token.split('.');
+  return parts.length === 3;
+};
+
+// Получаем токен из localStorage, если он есть и валиден
+const storedToken = localStorage.getItem('token');
+const token = isValidToken(storedToken) ? storedToken : null;
+
+// Если токен невалиден, удаляем его из localStorage
+if (!isValidToken(storedToken) && storedToken !== null) {
+  console.warn('Найден невалидный токен в localStorage, удаляем его');
+  localStorage.removeItem('token');
+}
 
 // Функция для определения базового маршрута по роли
 const getDefaultPathByRole = (roles?: string[]): string => {
@@ -42,6 +58,16 @@ const authSlice = createSlice({
 
       state.defaultPath = getDefaultPathByRole(state.user.roles);
     },
+    // Добавляем новое действие для восстановления токена
+    restoreToken: (state, action: PayloadAction<string>) => {
+      if (isValidToken(action.payload)) {
+        state.token = action.payload;
+        state.isAuthenticated = true;
+        console.log('Токен успешно восстановлен');
+      } else {
+        console.warn('Попытка восстановить невалидный токен');
+      }
+    },
   },
   // Добавляем extraReducers для обработки результатов API запросов
   extraReducers: builder => {
@@ -49,25 +75,33 @@ const authSlice = createSlice({
     builder.addMatcher(authApiSlice.endpoints.login.matchFulfilled, (state, action) => {
       state.isAuthenticated = true;
       state.user = action.payload.user;
-      state.token = action.payload.accessToken;
-      localStorage.setItem('token', action.payload.accessToken);
+      state.token = action.payload.access_token;
+      localStorage.setItem('token', action.payload.access_token);
     });
 
     // Обработка успешной регистрации
     builder.addMatcher(authApiSlice.endpoints.register.matchFulfilled, (state, action) => {
       state.isAuthenticated = true;
       state.user = action.payload.user;
-      state.token = action.payload.accessToken;
-      localStorage.setItem('token', action.payload.accessToken);
+      state.token = action.payload.access_token;
+      localStorage.setItem('token', action.payload.access_token);
     });
 
     // Обработка получения профиля
     builder.addMatcher(authApiSlice.endpoints.getProfile.matchFulfilled, (state, action) => {
       state.user = action.payload;
+      // Если профиль получен успешно, но токена в state нет, восстанавливаем из localStorage
+      if (!state.token) {
+        const storedToken = localStorage.getItem('token');
+        if (isValidToken(storedToken)) {
+          state.token = storedToken;
+          state.isAuthenticated = true;
+        }
+      }
     });
   },
 });
 
-export const { logout, setDefaultPath } = authSlice.actions;
+export const { logout, setDefaultPath, restoreToken } = authSlice.actions;
 
 export default authSlice.reducer;

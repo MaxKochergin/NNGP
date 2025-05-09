@@ -1,4 +1,4 @@
-import { Navigate, Outlet, RouteObject } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import RoleBasedRoute from '../components/auth/RoleBasedRoute';
 import AvailableTests from '../pages/candidate/AvailableTests';
 import BasicInfo from '../pages/candidate/BasicInfo';
