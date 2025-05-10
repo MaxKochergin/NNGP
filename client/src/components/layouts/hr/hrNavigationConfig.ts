@@ -36,7 +36,7 @@ export const hrNavigationItems: NavigationItem[] = [
   },
   {
     title: 'Тесты',
-    path: '/app/hr/tests/management',
+    path: '/app/hr/tests',
     icon: AssignmentIcon,
   },
   {
@@ -51,13 +51,13 @@ export const hrNavigationItems: NavigationItem[] = [
   },
   {
     title: 'Учебные материалы',
-    path: '/app/hr/learning/management',
+    path: '/app/hr/learning',
     icon: SchoolIcon,
   },
   {
     title: 'Назначения курсов',
-    path: '/app/hr/learning/assignments',
-    icon: SchoolIcon,
+    path: '/app/hr/assignments',
+    icon: AssignmentIndIcon,
   },
   {
     title: 'Уведомления',
