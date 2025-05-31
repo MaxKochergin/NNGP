@@ -1,10 +1,22 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { railwayConfig } from '../src/config/railway.config';
 
-const prisma = new PrismaClient();
+// Создаем PrismaClient с fallback конфигурацией
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: railwayConfig.DATABASE_URL,
+    },
+  },
+});
 
 async function main() {
   console.log('🌱 Начинаем заполнение базы данных тестовыми данными...');
+  console.log(
+    '🔗 Используем DATABASE_URL:',
+    railwayConfig.DATABASE_URL ? 'найден' : 'не найден',
+  );
 
   // 1. Создаем роли
   console.log('📝 Создаем роли...');
@@ -313,7 +325,7 @@ async function main() {
   });
 
   console.log('✅ Заполнение базы данных завершено!');
-  console.log('📧 Тестовые аккаунты:');
+  console.log('�� Тестовые аккаунты:');
   console.log('   Admin: admin@example.com / password123');
   console.log('   Mentor: mentor@example.com / password123');
   console.log('   User: user@example.com / password123');
