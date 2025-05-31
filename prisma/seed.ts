@@ -91,7 +91,7 @@ async function main() {
     { name: 'Git', category: 'Tools' },
   ];
 
-  const createdSkills = [];
+  const createdSkills: any[] = [];
   for (const skill of skills) {
     let existingSkill = await prisma.skill.findFirst({
       where: { name: skill.name },
@@ -215,9 +215,9 @@ async function main() {
 
   // 7. Добавляем навыки к профилям
   console.log('🎯 Добавляем навыки к профилям...');
-  const jsSkill = createdSkills.find((s) => s.name === 'JavaScript');
-  const reactSkill = createdSkills.find((s) => s.name === 'React');
-  const nodeSkill = createdSkills.find((s) => s.name === 'Node.js');
+  const jsSkill = createdSkills.find((s: any) => s.name === 'JavaScript');
+  const reactSkill = createdSkills.find((s: any) => s.name === 'React');
+  const nodeSkill = createdSkills.find((s: any) => s.name === 'Node.js');
 
   if (jsSkill) {
     const existingProfileSkill = await prisma.profileSkill.findFirst({
@@ -272,11 +272,12 @@ async function main() {
     create: {
       id: 'q1-js-var',
       testId: test.id,
-      questionText:
+      content:
         'Какой из способов объявления переменной создает блочную область видимости?',
-      questionType: 'single_choice',
-      points: 1,
+      type: 'single_choice',
+      score: 1,
       createdById: mentorUser.id,
+      isApproved: true,
     },
   });
 
@@ -286,10 +287,11 @@ async function main() {
     create: {
       id: 'q2-js-func',
       testId: test.id,
-      questionText: 'Что выведет console.log(typeof function() {})?',
-      questionType: 'single_choice',
-      points: 1,
+      content: 'Что выведет console.log(typeof function() {})?',
+      type: 'single_choice',
+      score: 1,
       createdById: mentorUser.id,
+      isApproved: true,
     },
   });
 
@@ -297,15 +299,15 @@ async function main() {
   console.log('✅ Создаем варианты ответов...');
   await prisma.answerOption.createMany({
     data: [
-      { questionId: question1.id, optionText: 'var', isCorrect: false },
-      { questionId: question1.id, optionText: 'let', isCorrect: true },
-      { questionId: question1.id, optionText: 'const', isCorrect: true },
-      { questionId: question1.id, optionText: 'function', isCorrect: false },
+      { questionId: question1.id, content: 'var', isCorrect: false },
+      { questionId: question1.id, content: 'let', isCorrect: true },
+      { questionId: question1.id, content: 'const', isCorrect: true },
+      { questionId: question1.id, content: 'function', isCorrect: false },
 
-      { questionId: question2.id, optionText: 'function', isCorrect: true },
-      { questionId: question2.id, optionText: 'object', isCorrect: false },
-      { questionId: question2.id, optionText: 'undefined', isCorrect: false },
-      { questionId: question2.id, optionText: 'string', isCorrect: false },
+      { questionId: question2.id, content: 'function', isCorrect: true },
+      { questionId: question2.id, content: 'object', isCorrect: false },
+      { questionId: question2.id, content: 'undefined', isCorrect: false },
+      { questionId: question2.id, content: 'string', isCorrect: false },
     ],
     skipDuplicates: true,
   });
