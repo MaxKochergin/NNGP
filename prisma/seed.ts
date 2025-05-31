@@ -8,61 +8,73 @@ async function main() {
 
   // 1. Создаем роли
   console.log('📝 Создаем роли...');
-  const adminRole = await prisma.role.upsert({
-    where: { name: 'admin' },
-    update: {},
-    create: {
-      name: 'admin',
-      description: 'Администратор системы',
-    },
-  });
+  let adminRole = await prisma.role.findFirst({ where: { name: 'admin' } });
+  if (!adminRole) {
+    adminRole = await prisma.role.create({
+      data: {
+        name: 'admin',
+        description: 'Администратор системы',
+      },
+    });
+  }
 
-  const userRole = await prisma.role.upsert({
-    where: { name: 'user' },
-    update: {},
-    create: {
-      name: 'user',
-      description: 'Обычный пользователь',
-    },
-  });
+  let userRole = await prisma.role.findFirst({ where: { name: 'user' } });
+  if (!userRole) {
+    userRole = await prisma.role.create({
+      data: {
+        name: 'user',
+        description: 'Обычный пользователь',
+      },
+    });
+  }
 
-  const mentorRole = await prisma.role.upsert({
-    where: { name: 'mentor' },
-    update: {},
-    create: {
-      name: 'mentor',
-      description: 'Ментор/Преподаватель',
-    },
-  });
+  let mentorRole = await prisma.role.findFirst({ where: { name: 'mentor' } });
+  if (!mentorRole) {
+    mentorRole = await prisma.role.create({
+      data: {
+        name: 'mentor',
+        description: 'Ментор/Преподаватель',
+      },
+    });
+  }
 
   // 2. Создаем специализации
   console.log('🎯 Создаем специализации...');
-  const frontendSpec = await prisma.specialization.upsert({
+  let frontendSpec = await prisma.specialization.findFirst({
     where: { name: 'Frontend Developer' },
-    update: {},
-    create: {
-      name: 'Frontend Developer',
-      description: 'Разработка пользовательских интерфейсов',
-    },
   });
+  if (!frontendSpec) {
+    frontendSpec = await prisma.specialization.create({
+      data: {
+        name: 'Frontend Developer',
+        description: 'Разработка пользовательских интерфейсов',
+      },
+    });
+  }
 
-  const backendSpec = await prisma.specialization.upsert({
+  let backendSpec = await prisma.specialization.findFirst({
     where: { name: 'Backend Developer' },
-    update: {},
-    create: {
-      name: 'Backend Developer',
-      description: 'Серверная разработка и API',
-    },
   });
+  if (!backendSpec) {
+    backendSpec = await prisma.specialization.create({
+      data: {
+        name: 'Backend Developer',
+        description: 'Серверная разработка и API',
+      },
+    });
+  }
 
-  const fullstackSpec = await prisma.specialization.upsert({
+  let fullstackSpec = await prisma.specialization.findFirst({
     where: { name: 'Fullstack Developer' },
-    update: {},
-    create: {
-      name: 'Fullstack Developer',
-      description: 'Полный цикл веб-разработки',
-    },
   });
+  if (!fullstackSpec) {
+    fullstackSpec = await prisma.specialization.create({
+      data: {
+        name: 'Fullstack Developer',
+        description: 'Полный цикл веб-разработки',
+      },
+    });
+  }
 
   // 3. Создаем навыки
   console.log('💪 Создаем навыки...');
@@ -81,12 +93,15 @@ async function main() {
 
   const createdSkills = [];
   for (const skill of skills) {
-    const createdSkill = await prisma.skill.upsert({
+    let existingSkill = await prisma.skill.findFirst({
       where: { name: skill.name },
-      update: {},
-      create: skill,
     });
-    createdSkills.push(createdSkill);
+    if (!existingSkill) {
+      existingSkill = await prisma.skill.create({
+        data: skill,
+      });
+    }
+    createdSkills.push(existingSkill);
   }
 
   // 4. Создаем пользователей
@@ -136,47 +151,41 @@ async function main() {
 
   // 5. Назначаем роли
   console.log('🔐 Назначаем роли...');
-  await prisma.userRole.upsert({
-    where: {
-      userId_roleId: {
+  const adminUserRole = await prisma.userRole.findFirst({
+    where: { userId: adminUser.id, roleId: adminRole.id },
+  });
+  if (!adminUserRole) {
+    await prisma.userRole.create({
+      data: {
         userId: adminUser.id,
         roleId: adminRole.id,
       },
-    },
-    update: {},
-    create: {
-      userId: adminUser.id,
-      roleId: adminRole.id,
-    },
-  });
+    });
+  }
 
-  await prisma.userRole.upsert({
-    where: {
-      userId_roleId: {
+  const mentorUserRole = await prisma.userRole.findFirst({
+    where: { userId: mentorUser.id, roleId: mentorRole.id },
+  });
+  if (!mentorUserRole) {
+    await prisma.userRole.create({
+      data: {
         userId: mentorUser.id,
         roleId: mentorRole.id,
       },
-    },
-    update: {},
-    create: {
-      userId: mentorUser.id,
-      roleId: mentorRole.id,
-    },
-  });
+    });
+  }
 
-  await prisma.userRole.upsert({
-    where: {
-      userId_roleId: {
+  const testUserRole = await prisma.userRole.findFirst({
+    where: { userId: testUser.id, roleId: userRole.id },
+  });
+  if (!testUserRole) {
+    await prisma.userRole.create({
+      data: {
         userId: testUser.id,
         roleId: userRole.id,
       },
-    },
-    update: {},
-    create: {
-      userId: testUser.id,
-      roleId: userRole.id,
-    },
-  });
+    });
+  }
 
   // 6. Создаем профили
   console.log('📋 Создаем профили...');
@@ -218,20 +227,21 @@ async function main() {
   for (const skillData of mentorSkills) {
     const skill = createdSkills.find((s) => s.name === skillData.skillName);
     if (skill) {
-      await prisma.profileSkill.upsert({
+      const existingProfileSkill = await prisma.profileSkill.findFirst({
         where: {
-          profileId_skillId: {
-            profileId: mentorProfile.id,
-            skillId: skill.id,
-          },
-        },
-        update: {},
-        create: {
           profileId: mentorProfile.id,
           skillId: skill.id,
-          level: skillData.level,
         },
       });
+      if (!existingProfileSkill) {
+        await prisma.profileSkill.create({
+          data: {
+            profileId: mentorProfile.id,
+            skillId: skill.id,
+            level: skillData.level,
+          },
+        });
+      }
     }
   }
 
