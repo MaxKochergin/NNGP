@@ -37,7 +37,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 // Тестовые данные для редактирования
 const mockCandidateDetails = {
   id: '1',
-  name: 'Иванов Иван Иванович',
+  name: 'Королев Антон Павлович',
   position: 'Инженер-конструктор',
   experience: '5 лет',
   status: 'На собеседовании',
@@ -49,7 +49,7 @@ const mockCandidateDetails = {
     'ЛИРА-САПР',
     'Нормативная документация',
   ],
-  email: 'ivanov@example.com',
+  email: 'korolev@example.com',
   phone: '+7 (999) 123-45-67',
   resumeUrl: '/documents/resume1.pdf',
   salary: '120000',
