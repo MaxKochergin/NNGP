@@ -1,9 +1,9 @@
 // Railway configuration with fallbacks
 export const railwayConfig = {
-  // Эти значения нужно заменить на реальные из Railway PostgreSQL
+  // Реальный DATABASE_URL из Railway PostgreSQL
   DATABASE_URL:
     process.env.DATABASE_URL ||
-    'postgresql://postgres:password@host:port/database',
+    'postgresql://postgres:tcHTDfzKOwYTWbiZjrjImmkwOfUWaCwS@postgres.railway.internal:5432/railway',
   JWT_SECRET: process.env.JWT_SECRET || 'fallback-jwt-secret-key',
   NODE_ENV: process.env.NODE_ENV || 'production',
   PORT: process.env.PORT || '3000',
