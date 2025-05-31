@@ -40,7 +40,7 @@ export interface Employee {
 const mockEmployees: Employee[] = [
   {
     id: '1',
-    name: 'Иванов Иван Иванович',
+    name: 'Смирнов Дмитрий Константинович',
     position: 'Ведущий инженер-конструктор',
     department: 'Конструкторский отдел',
     experience: '5 лет',
@@ -51,7 +51,7 @@ const mockEmployees: Employee[] = [
   },
   {
     id: '2',
-    name: 'Петрова Анна Сергеевна',
+    name: 'Соловьева Мария Андреевна',
     position: 'Инженер-проектировщик ОВиК',
     department: 'Отдел инженерных систем',
     experience: '3 года',
@@ -62,7 +62,7 @@ const mockEmployees: Employee[] = [
   },
   {
     id: '3',
-    name: 'Сидоров Алексей Петрович',
+    name: 'Николаев Алексей Викторович',
     position: 'Главный инженер проекта',
     department: 'Управление проектами',
     experience: '8 лет',
@@ -73,7 +73,7 @@ const mockEmployees: Employee[] = [
   },
   {
     id: '4',
-    name: 'Козлова Екатерина Владимировна',
+    name: 'Белова Екатерина Николаевна',
     position: 'Главный архитектор',
     department: 'Архитектурный отдел',
     experience: '7 лет',
@@ -84,7 +84,7 @@ const mockEmployees: Employee[] = [
   },
   {
     id: '5',
-    name: 'Соколов Дмитрий Александрович',
+    name: 'Кузнецов Виталий Александрович',
     position: 'BIM-координатор',
     department: 'BIM-отдел',
     experience: '4 года',

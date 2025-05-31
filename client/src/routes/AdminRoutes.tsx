@@ -1,10 +1,11 @@
 import { Navigate, Outlet, RouteObject } from 'react-router-dom';
 import RoleBasedRoute from '../components/auth/RoleBasedRoute';
-
-// Импорт компонентов админа
-// Замените этот комментарий на реальный импорт, когда создадите компоненты
-// import AdminPanel from '../pages/admin/Panel';
-// import RolesManagement from '../pages/admin/RolesManagement';
+import Notifications from '../pages/admin/NotificationsAdmin';
+// Импорт новых компонентов админа
+import Panel from '../pages/admin/Panel';
+import Settings from '../pages/admin/Settings';
+import SystemInfo from '../pages/admin/system/SystemInfo';
+import UsersList from '../pages/admin/users/UsersList';
 
 // Определяем маршрут для админа
 const adminRoute = {
@@ -22,65 +23,32 @@ const adminRoute = {
     },
     {
       path: 'panel',
-      element: (
-        // Временная заглушка, замените на реальный компонент
-        <div>Панель администратора (в разработке)</div>
-      ),
+      element: <Panel />,
     },
-    {
-      path: 'roles',
-      element: (
-        // Временная заглушка, замените на реальный компонент
-        <div>Управление ролями (в разработке)</div>
-      ),
-    },
-    {
-      path: 'settings',
-      element: (
-        // Временная заглушка, замените на реальный компонент
-        <div>Настройки системы (в разработке)</div>
-      ),
-    },
+
     // Маршруты для управления контентом (Админ)
     {
-      path: 'content',
-      children: [
-        {
-          path: 'tests',
-          element: <div>Управление тестами (Admin) (в разработке)</div>,
-        },
-        {
-          path: 'learning',
-          element: <div>Управление учебными материалами (Admin) (в разработке)</div>,
-        },
-        {
-          path: 'notifications',
-          element: <div>Управление уведомлениями (в разработке)</div>,
-        },
-      ],
+      path: 'settings',
+      element: <Settings />,
     },
-    // Маршруты для системного администрирования
+    {
+      path: 'notifications',
+      element: <Notifications />,
+    },
+    // Маршруты для управления пользователями
+    {
+      path: 'users',
+      element: <UsersList />,
+    },
+    // Маршрут для системной информации
     {
       path: 'system',
-      children: [
-        {
-          path: 'users',
-          element: <div>Управление пользователями (в разработке)</div>,
-        },
-        {
-          path: 'logs',
-          element: <div>Системные логи (в разработке)</div>,
-        },
-        {
-          path: 'backup',
-          element: <div>Резервное копирование (в разработке)</div>,
-        },
-      ],
+      element: <SystemInfo />,
     },
+
     // Здесь можно добавить другие подмаршруты для админа
   ],
 };
 
 // Экспортируем сам объект для использования в PrivateRoutes
 export const adminRoutes = adminRoute;
- 

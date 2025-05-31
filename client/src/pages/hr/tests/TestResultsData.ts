@@ -19,7 +19,7 @@ export const mockTestResults: TestResult[] = [
   {
     id: 'r1',
     userId: '1',
-    userName: 'Иванов Иван Иванович',
+    userName: 'Смирнов Дмитрий Константинович',
     userType: 'employee',
     testId: '1',
     testTitle: 'Тест на знание AutoCAD',
@@ -127,7 +127,7 @@ export const mockTestResults: TestResult[] = [
   {
     id: 'r9',
     userId: '1',
-    userName: 'Иванов Иван Иванович',
+    userName: 'Смирнов Дмитрий Константинович',
     userType: 'employee',
     testId: '3',
     testTitle: 'Тест на знание Revit',

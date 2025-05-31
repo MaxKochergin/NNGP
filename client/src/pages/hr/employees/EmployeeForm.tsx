@@ -37,7 +37,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 // Тестовые данные для редактирования сотрудника
 const mockEmployeeDetails = {
   id: '1',
-  name: 'Иванов Иван Иванович',
+  name: 'Смирнов Дмитрий Константинович',
   position: 'Ведущий инженер-конструктор',
   department: 'Конструкторский отдел',
   experience: '5 лет',
@@ -50,7 +50,7 @@ const mockEmployeeDetails = {
     'Железобетонные конструкции',
     'Нормативная документация',
   ],
-  email: 'ivanov@example.com',
+  email: 'smirnov@example.com',
   phone: '+7 (999) 123-45-67',
   salary: '180000',
   location: 'Москва',
@@ -160,6 +160,13 @@ interface EmployeeFormData {
   education: Education[];
   workExperience: WorkExperience[];
 }
+
+// Предзаполненные данные для формы (для редактирования)
+const defaultValues = {
+  name: 'Смирнов Дмитрий Константинович',
+  position: 'Ведущий инженер-конструктор',
+  // ... existing code ...
+};
 
 const EmployeeForm = () => {
   const { id } = useParams<{ id: string }>();
