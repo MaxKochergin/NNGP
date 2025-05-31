@@ -1,92 +1,68 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { railwayConfig } from '../src/config/railway.config';
 
-// Создаем PrismaClient с fallback конфигурацией
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: railwayConfig.DATABASE_URL,
-    },
-  },
-});
+const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Начинаем заполнение базы данных тестовыми данными...');
-  console.log(
-    '🔗 Используем DATABASE_URL:',
-    railwayConfig.DATABASE_URL ? 'найден' : 'не найден',
-  );
 
   // 1. Создаем роли
   console.log('📝 Создаем роли...');
-  let adminRole = await prisma.role.findFirst({ where: { name: 'admin' } });
-  if (!adminRole) {
-    adminRole = await prisma.role.create({
-      data: {
-        name: 'admin',
-        description: 'Администратор системы',
-      },
-    });
-  }
+  const adminRole = await prisma.role.upsert({
+    where: { name: 'admin' },
+    update: {},
+    create: {
+      name: 'admin',
+      description: 'Администратор системы',
+    },
+  });
 
-  let userRole = await prisma.role.findFirst({ where: { name: 'user' } });
-  if (!userRole) {
-    userRole = await prisma.role.create({
-      data: {
-        name: 'user',
-        description: 'Обычный пользователь',
-      },
-    });
-  }
+  const userRole = await prisma.role.upsert({
+    where: { name: 'user' },
+    update: {},
+    create: {
+      name: 'user',
+      description: 'Обычный пользователь',
+    },
+  });
 
-  let mentorRole = await prisma.role.findFirst({ where: { name: 'mentor' } });
-  if (!mentorRole) {
-    mentorRole = await prisma.role.create({
-      data: {
-        name: 'mentor',
-        description: 'Ментор/Преподаватель',
-      },
-    });
-  }
+  const mentorRole = await prisma.role.upsert({
+    where: { name: 'mentor' },
+    update: {},
+    create: {
+      name: 'mentor',
+      description: 'Ментор/Преподаватель',
+    },
+  });
 
   // 2. Создаем специализации
   console.log('🎯 Создаем специализации...');
-  let frontendSpec = await prisma.specialization.findFirst({
+  const frontendSpec = await prisma.specialization.upsert({
     where: { name: 'Frontend Developer' },
+    update: {},
+    create: {
+      name: 'Frontend Developer',
+      description: 'Разработка пользовательских интерфейсов',
+    },
   });
-  if (!frontendSpec) {
-    frontendSpec = await prisma.specialization.create({
-      data: {
-        name: 'Frontend Developer',
-        description: 'Разработка пользовательских интерфейсов',
-      },
-    });
-  }
 
-  let backendSpec = await prisma.specialization.findFirst({
+  const backendSpec = await prisma.specialization.upsert({
     where: { name: 'Backend Developer' },
+    update: {},
+    create: {
+      name: 'Backend Developer',
+      description: 'Серверная разработка и API',
+    },
   });
-  if (!backendSpec) {
-    backendSpec = await prisma.specialization.create({
-      data: {
-        name: 'Backend Developer',
-        description: 'Серверная разработка и API',
-      },
-    });
-  }
 
-  let fullstackSpec = await prisma.specialization.findFirst({
+  const fullstackSpec = await prisma.specialization.upsert({
     where: { name: 'Fullstack Developer' },
+    update: {},
+    create: {
+      name: 'Fullstack Developer',
+      description: 'Полный цикл веб-разработки',
+    },
   });
-  if (!fullstackSpec) {
-    fullstackSpec = await prisma.specialization.create({
-      data: {
-        name: 'Fullstack Developer',
-        description: 'Полный цикл веб-разработки',
-      },
-    });
-  }
 
   // 3. Создаем навыки
   console.log('💪 Создаем навыки...');
@@ -103,17 +79,14 @@ async function main() {
     { name: 'Git', category: 'Tools' },
   ];
 
-  const createdSkills: any[] = [];
+  const createdSkills = [];
   for (const skill of skills) {
-    let existingSkill = await prisma.skill.findFirst({
+    const createdSkill = await prisma.skill.upsert({
       where: { name: skill.name },
+      update: {},
+      create: skill,
     });
-    if (!existingSkill) {
-      existingSkill = await prisma.skill.create({
-        data: skill,
-      });
-    }
-    createdSkills.push(existingSkill);
+    createdSkills.push(createdSkill);
   }
 
   // 4. Создаем пользователей
@@ -163,41 +136,47 @@ async function main() {
 
   // 5. Назначаем роли
   console.log('🔐 Назначаем роли...');
-  const adminUserRole = await prisma.userRole.findFirst({
-    where: { userId: adminUser.id, roleId: adminRole.id },
-  });
-  if (!adminUserRole) {
-    await prisma.userRole.create({
-      data: {
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
         userId: adminUser.id,
         roleId: adminRole.id,
       },
-    });
-  }
-
-  const mentorUserRole = await prisma.userRole.findFirst({
-    where: { userId: mentorUser.id, roleId: mentorRole.id },
+    },
+    update: {},
+    create: {
+      userId: adminUser.id,
+      roleId: adminRole.id,
+    },
   });
-  if (!mentorUserRole) {
-    await prisma.userRole.create({
-      data: {
+
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
         userId: mentorUser.id,
         roleId: mentorRole.id,
       },
-    });
-  }
-
-  const testUserRole = await prisma.userRole.findFirst({
-    where: { userId: testUser.id, roleId: userRole.id },
+    },
+    update: {},
+    create: {
+      userId: mentorUser.id,
+      roleId: mentorRole.id,
+    },
   });
-  if (!testUserRole) {
-    await prisma.userRole.create({
-      data: {
+
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
         userId: testUser.id,
         roleId: userRole.id,
       },
-    });
-  }
+    },
+    update: {},
+    create: {
+      userId: testUser.id,
+      roleId: userRole.id,
+    },
+  });
 
   // 6. Создаем профили
   console.log('📋 Создаем профили...');
@@ -219,7 +198,7 @@ async function main() {
     create: {
       userId: testUser.id,
       specializationId: frontendSpec.id,
-      aboutMe: 'Начинающий frontend разработчик',
+      aboutMe: 'Junior frontend разработчик, изучаю React',
       specialistLevel: 'Junior',
       location: 'Санкт-Петербург, Россия',
     },
@@ -227,113 +206,184 @@ async function main() {
 
   // 7. Добавляем навыки к профилям
   console.log('🎯 Добавляем навыки к профилям...');
-  const jsSkill = createdSkills.find((s: any) => s.name === 'JavaScript');
-  const reactSkill = createdSkills.find((s: any) => s.name === 'React');
-  const nodeSkill = createdSkills.find((s: any) => s.name === 'Node.js');
+  const mentorSkills = [
+    { skillName: 'JavaScript', level: 9 },
+    { skillName: 'TypeScript', level: 8 },
+    { skillName: 'React', level: 9 },
+    { skillName: 'Node.js', level: 8 },
+    { skillName: 'NestJS', level: 7 },
+    { skillName: 'PostgreSQL', level: 8 },
+  ];
 
-  if (jsSkill) {
-    const existingProfileSkill = await prisma.profileSkill.findFirst({
-      where: { profileId: userProfile.id, skillId: jsSkill.id },
-    });
-    if (!existingProfileSkill) {
-      await prisma.profileSkill.create({
-        data: {
-          profileId: userProfile.id,
-          skillId: jsSkill.id,
-          level: 3,
+  for (const skillData of mentorSkills) {
+    const skill = createdSkills.find((s) => s.name === skillData.skillName);
+    if (skill) {
+      await prisma.profileSkill.upsert({
+        where: {
+          profileId_skillId: {
+            profileId: mentorProfile.id,
+            skillId: skill.id,
+          },
+        },
+        update: {},
+        create: {
+          profileId: mentorProfile.id,
+          skillId: skill.id,
+          level: skillData.level,
         },
       });
     }
   }
 
-  if (reactSkill) {
-    const existingProfileSkill = await prisma.profileSkill.findFirst({
-      where: { profileId: userProfile.id, skillId: reactSkill.id },
-    });
-    if (!existingProfileSkill) {
-      await prisma.profileSkill.create({
-        data: {
-          profileId: userProfile.id,
-          skillId: reactSkill.id,
-          level: 2,
-        },
-      });
-    }
-  }
-
-  // 8. Создаем тест
-  console.log('📝 Создаем тест...');
-  const test = await prisma.test.upsert({
-    where: { id: 'test-js-basics' },
-    update: {},
-    create: {
-      id: 'test-js-basics',
-      title: 'JavaScript Основы',
-      description: 'Тест на знание основ JavaScript',
-      durationMinutes: 30,
-      createdById: mentorUser.id,
-      isPublished: true,
-    },
+  // 8. Создаем тесты
+  console.log('📝 Создаем тесты...');
+  let jsTest = await prisma.test.findFirst({
+    where: { title: 'JavaScript Основы' },
   });
+  if (!jsTest) {
+    jsTest = await prisma.test.create({
+      data: {
+        title: 'JavaScript Основы',
+        description: 'Тест на знание основ JavaScript',
+        durationMinutes: 30,
+        createdById: mentorUser.id,
+        isPublished: true,
+      },
+    });
+  }
 
   // 9. Создаем вопросы
   console.log('❓ Создаем вопросы...');
-  const question1 = await prisma.question.upsert({
-    where: { id: 'q1-js-var' },
-    update: {},
-    create: {
-      id: 'q1-js-var',
-      testId: test.id,
+  let question1 = await prisma.question.findFirst({
+    where: {
+      testId: jsTest.id,
+      content: 'Что выведет console.log(typeof null)?',
+    },
+  });
+  if (!question1) {
+    question1 = await prisma.question.create({
+      data: {
+        testId: jsTest.id,
+        content: 'Что выведет console.log(typeof null)?',
+        type: 'multiple_choice',
+        correctAnswer: 'object',
+        score: 10,
+        createdById: mentorUser.id,
+        isApproved: true,
+      },
+    });
+
+    // Варианты ответов для вопроса 1
+    await prisma.answerOption.createMany({
+      data: [
+        { questionId: question1.id, content: 'null', isCorrect: false },
+        { questionId: question1.id, content: 'object', isCorrect: true },
+        { questionId: question1.id, content: 'undefined', isCorrect: false },
+        { questionId: question1.id, content: 'string', isCorrect: false },
+      ],
+    });
+  }
+
+  let question2 = await prisma.question.findFirst({
+    where: {
+      testId: jsTest.id,
       content:
-        'Какой из способов объявления переменной создает блочную область видимости?',
-      type: 'single_choice',
-      score: 1,
-      createdById: mentorUser.id,
-      isApproved: true,
+        'Какой метод используется для добавления элемента в конец массива?',
     },
   });
+  if (!question2) {
+    question2 = await prisma.question.create({
+      data: {
+        testId: jsTest.id,
+        content:
+          'Какой метод используется для добавления элемента в конец массива?',
+        type: 'multiple_choice',
+        correctAnswer: 'push',
+        score: 10,
+        createdById: mentorUser.id,
+        isApproved: true,
+      },
+    });
 
-  const question2 = await prisma.question.upsert({
-    where: { id: 'q2-js-func' },
-    update: {},
-    create: {
-      id: 'q2-js-func',
-      testId: test.id,
-      content: 'Что выведет console.log(typeof function() {})?',
-      type: 'single_choice',
-      score: 1,
-      createdById: mentorUser.id,
-      isApproved: true,
+    // Варианты ответов для вопроса 2
+    await prisma.answerOption.createMany({
+      data: [
+        { questionId: question2.id, content: 'push()', isCorrect: true },
+        { questionId: question2.id, content: 'pop()', isCorrect: false },
+        { questionId: question2.id, content: 'shift()', isCorrect: false },
+        { questionId: question2.id, content: 'unshift()', isCorrect: false },
+      ],
+    });
+  }
+
+  // 10. Связываем тест со специализацией
+  console.log('🔗 Связываем тест со специализацией...');
+  const existingSpecTest = await prisma.specializationTest.findFirst({
+    where: {
+      specializationId: frontendSpec.id,
+      testId: jsTest.id,
     },
   });
+  if (!existingSpecTest) {
+    await prisma.specializationTest.create({
+      data: {
+        specializationId: frontendSpec.id,
+        testId: jsTest.id,
+        isRequired: true,
+      },
+    });
+  }
 
-  // 10. Создаем варианты ответов
-  console.log('✅ Создаем варианты ответов...');
-  await prisma.answerOption.createMany({
-    data: [
-      { questionId: question1.id, content: 'var', isCorrect: false },
-      { questionId: question1.id, content: 'let', isCorrect: true },
-      { questionId: question1.id, content: 'const', isCorrect: true },
-      { questionId: question1.id, content: 'function', isCorrect: false },
-
-      { questionId: question2.id, content: 'function', isCorrect: true },
-      { questionId: question2.id, content: 'object', isCorrect: false },
-      { questionId: question2.id, content: 'undefined', isCorrect: false },
-      { questionId: question2.id, content: 'string', isCorrect: false },
-    ],
-    skipDuplicates: true,
+  // 11. Создаем учебные материалы
+  console.log('📚 Создаем учебные материалы...');
+  let learningMaterial = await prisma.learningMaterial.findFirst({
+    where: { title: 'Введение в JavaScript' },
   });
+  if (!learningMaterial) {
+    learningMaterial = await prisma.learningMaterial.create({
+      data: {
+        title: 'Введение в JavaScript',
+        content: `# Введение в JavaScript
+
+JavaScript - это высокоуровневый, интерпретируемый язык программирования.
+
+## Основные концепции:
+- Переменные и типы данных
+- Функции
+- Объекты и массивы
+- Асинхронное программирование
+
+## Пример кода:
+\`\`\`javascript
+const greeting = "Привет, мир!";
+console.log(greeting);
+\`\`\``,
+        specializationId: frontendSpec.id,
+        createdById: mentorUser.id,
+        isPublished: true,
+      },
+    });
+  }
 
   console.log('✅ Заполнение базы данных завершено!');
-  console.log('�� Тестовые аккаунты:');
-  console.log('   Admin: admin@example.com / password123');
-  console.log('   Mentor: mentor@example.com / password123');
-  console.log('   User: user@example.com / password123');
+  console.log('📊 Созданные данные:');
+  console.log('- 3 роли (admin, user, mentor)');
+  console.log('- 3 специализации (Frontend, Backend, Fullstack)');
+  console.log('- 10 навыков');
+  console.log('- 3 пользователя');
+  console.log('- 2 профиля');
+  console.log('- 1 тест с 2 вопросами');
+  console.log('- 1 учебный материал');
+  console.log('');
+  console.log('🔑 Тестовые аккаунты:');
+  console.log('- admin@example.com / password123 (Администратор)');
+  console.log('- mentor@example.com / password123 (Ментор)');
+  console.log('- user@example.com / password123 (Пользователь)');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Ошибка при заполнении базы данных:', e);
+    console.error('❌ Ошибка при заполнении БД:', e);
     process.exit(1);
   })
   .finally(async () => {
