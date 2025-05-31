@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Skill } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -91,7 +91,7 @@ async function main() {
     { name: 'Git', category: 'Tools' },
   ];
 
-  const createdSkills = [];
+  const createdSkills: Skill[] = [];
   for (const skill of skills) {
     let existingSkill = await prisma.skill.findFirst({
       where: { name: skill.name },
