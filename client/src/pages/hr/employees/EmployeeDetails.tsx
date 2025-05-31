@@ -40,7 +40,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 const mockEmployeesDetails = [
   {
     id: '1',
-    name: 'Иванов Иван Иванович',
+    name: 'Смирнов Дмитрий Константинович',
     position: 'Ведущий инженер-конструктор',
     department: 'Конструкторский отдел',
     experience: '5 лет',
@@ -54,7 +54,7 @@ const mockEmployeesDetails = [
       'Нормативная документация',
     ],
     avatar: null,
-    email: 'ivanov@example.com',
+    email: 'smirnov@example.com',
     phone: '+7 (999) 123-45-67',
     salary: '180 000 руб.',
     location: 'Москва',

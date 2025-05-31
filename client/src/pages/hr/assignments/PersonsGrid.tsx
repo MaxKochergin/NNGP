@@ -20,7 +20,7 @@ import PersonCard from './PersonCard';
 const mockEmployees = [
   {
     id: 'emp1',
-    name: 'Иванов Иван Иванович',
+    name: 'Смирнов Дмитрий Константинович',
     position: 'Инженер-конструктор',
     department: 'Конструкторский отдел',
     photo: '',

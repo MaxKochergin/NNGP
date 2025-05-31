@@ -39,7 +39,7 @@ export interface Candidate {
 const mockCandidates: Candidate[] = [
   {
     id: '1',
-    name: 'Иванов Иван Иванович',
+    name: 'Королев Антон Павлович',
     position: 'Инженер-конструктор',
     experience: '5 лет',
     status: 'Новый',
@@ -49,7 +49,7 @@ const mockCandidates: Candidate[] = [
   },
   {
     id: '2',
-    name: 'Петрова Анна Сергеевна',
+    name: 'Дмитриева Ольга Игоревна',
     position: 'Инженер-проектировщик ОВиК',
     experience: '5 лет',
     status: 'На собеседовании',
@@ -59,7 +59,7 @@ const mockCandidates: Candidate[] = [
   },
   {
     id: '3',
-    name: 'Сидоров Алексей Петрович',
+    name: 'Васильев Сергей Станиславович',
     position: 'Ведущий инженер-конструктор',
     experience: '5 лет',
     status: 'Тестовое задание',
@@ -69,7 +69,7 @@ const mockCandidates: Candidate[] = [
   },
   {
     id: '4',
-    name: 'Козлова Екатерина Владимировна',
+    name: 'Григорьева Наталья Михайловна',
     position: 'Архитектор',
     experience: '5 лет',
     status: 'Принят',
@@ -79,7 +79,7 @@ const mockCandidates: Candidate[] = [
   },
   {
     id: '5',
-    name: 'Соколов Дмитрий Александрович',
+    name: 'Морозов Игорь Валентинович',
     position: 'BIM-координатор',
     experience: '5 лет',
     status: 'Отклонен',
