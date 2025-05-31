@@ -4,7 +4,27 @@ import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
-    super();
+    // Логируем переменные окружения для отладки
+    console.log('Environment variables check:');
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+    console.log('DATABASE_URL length:', process.env.DATABASE_URL?.length || 0);
+
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL is not set!');
+      console.log(
+        'Available env vars:',
+        Object.keys(process.env).filter((key) => key.includes('DATABASE')),
+      );
+    }
+
+    super({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
+    });
   }
 
   async onModuleInit() {
