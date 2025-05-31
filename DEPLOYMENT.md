@@ -2,8 +2,8 @@
 
 ## Архитектура деплоя
 
-- **Frontend**: Vercel (React + Vite)
-- **Backend**: Railway (NestJS + Node.js)
+- **Frontend**: Vercel (React + Vite) - папка `client/`
+- **Backend**: Railway (NestJS + Node.js) - корень проекта
 - **Database**: Railway PostgreSQL
 
 ## 1. Деплой Backend на Railway
@@ -17,7 +17,7 @@
 
 1. Нажмите "New Project" → "Deploy from GitHub repo"
 2. Выберите ваш репозиторий
-3. Выберите папку `server` как root directory
+3. **Root Directory**: оставьте пустым (корень проекта)
 
 ### Шаг 3: Добавление PostgreSQL
 
@@ -37,10 +37,11 @@ CORS_ORIGIN=https://your-frontend-domain.vercel.app
 
 ### Шаг 5: Настройка деплоя
 
-1. В настройках проекта установите:
-   - **Build Command**: `npm run build`
-   - **Start Command**: `npm run start:prod`
-   - **Root Directory**: `server`
+Railway автоматически определит настройки из:
+
+- **nixpacks.toml** (приоритет)
+- **Procfile** (запасной вариант)
+- **package.json** (по умолчанию)
 
 ## 2. Деплой Frontend на Vercel
 
@@ -71,9 +72,9 @@ Vercel автоматически определит настройки, но у
 
 После настройки каждый push в main ветку будет автоматически:
 
-1. Деплоить backend на Railway
+1. Деплоить backend на Railway (корень проекта)
 2. Выполнять миграции БД
-3. Деплоить frontend на Vercel
+3. Деплоить frontend на Vercel (папка client/)
 
 ## 4. Проверка деплоя
 
@@ -85,11 +86,11 @@ Vercel автоматически определит настройки, но у
 
 ```bash
 # Локальная проверка production build
-cd server && npm run build && npm run start:prod
+npm run build && npm run start:prod
 cd client && npm run build && npm run preview
 
 # Проверка миграций
-cd server && npx prisma migrate status
+npx prisma migrate status
 ```
 
 ## Troubleshooting
