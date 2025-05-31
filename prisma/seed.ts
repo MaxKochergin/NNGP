@@ -30,22 +30,36 @@ async function main() {
     });
   }
 
-  let userRole = await prisma.role.findFirst({ where: { name: 'user' } });
-  if (!userRole) {
-    userRole = await prisma.role.create({
+  let employerRole = await prisma.role.findFirst({
+    where: { name: 'employer' },
+  });
+  if (!employerRole) {
+    employerRole = await prisma.role.create({
       data: {
-        name: 'user',
-        description: 'Обычный пользователь',
+        name: 'employer',
+        description: 'Работодатель',
       },
     });
   }
 
-  let mentorRole = await prisma.role.findFirst({ where: { name: 'mentor' } });
-  if (!mentorRole) {
-    mentorRole = await prisma.role.create({
+  let candidateRole = await prisma.role.findFirst({
+    where: { name: 'candidate' },
+  });
+  if (!candidateRole) {
+    candidateRole = await prisma.role.create({
       data: {
-        name: 'mentor',
-        description: 'Ментор/Преподаватель',
+        name: 'candidate',
+        description: 'Кандидат/Соискатель',
+      },
+    });
+  }
+
+  let hrRole = await prisma.role.findFirst({ where: { name: 'hr' } });
+  if (!hrRole) {
+    hrRole = await prisma.role.create({
+      data: {
+        name: 'hr',
+        description: 'HR-специалист',
       },
     });
   }
@@ -134,13 +148,13 @@ async function main() {
   });
 
   const mentorUser = await prisma.user.upsert({
-    where: { email: 'mentor@example.com' },
+    where: { email: 'hr@example.com' },
     update: {},
     create: {
-      email: 'mentor@example.com',
+      email: 'hr@example.com',
       passwordHash,
-      firstName: 'Иван',
-      lastName: 'Ментор',
+      firstName: 'Анна',
+      lastName: 'HR-менеджер',
       phone: '+7 (999) 123-45-67',
       dataProcessingConsent: true,
       emailVerified: true,
@@ -148,14 +162,28 @@ async function main() {
   });
 
   const testUser = await prisma.user.upsert({
-    where: { email: 'user@example.com' },
+    where: { email: 'candidate@example.com' },
     update: {},
     create: {
-      email: 'user@example.com',
+      email: 'candidate@example.com',
       passwordHash,
       firstName: 'Петр',
-      lastName: 'Разработчик',
+      lastName: 'Кандидат',
       phone: '+7 (999) 987-65-43',
+      dataProcessingConsent: true,
+      emailVerified: true,
+    },
+  });
+
+  const employerUser = await prisma.user.upsert({
+    where: { email: 'employer@example.com' },
+    update: {},
+    create: {
+      email: 'employer@example.com',
+      passwordHash,
+      firstName: 'Михаил',
+      lastName: 'Работодатель',
+      phone: '+7 (999) 555-12-34',
       dataProcessingConsent: true,
       emailVerified: true,
     },
@@ -176,25 +204,37 @@ async function main() {
   }
 
   const mentorUserRole = await prisma.userRole.findFirst({
-    where: { userId: mentorUser.id, roleId: mentorRole.id },
+    where: { userId: mentorUser.id, roleId: hrRole.id },
   });
   if (!mentorUserRole) {
     await prisma.userRole.create({
       data: {
         userId: mentorUser.id,
-        roleId: mentorRole.id,
+        roleId: hrRole.id,
       },
     });
   }
 
   const testUserRole = await prisma.userRole.findFirst({
-    where: { userId: testUser.id, roleId: userRole.id },
+    where: { userId: testUser.id, roleId: candidateRole.id },
   });
   if (!testUserRole) {
     await prisma.userRole.create({
       data: {
         userId: testUser.id,
-        roleId: userRole.id,
+        roleId: candidateRole.id,
+      },
+    });
+  }
+
+  const employerUserRole = await prisma.userRole.findFirst({
+    where: { userId: employerUser.id, roleId: employerRole.id },
+  });
+  if (!employerUserRole) {
+    await prisma.userRole.create({
+      data: {
+        userId: employerUser.id,
+        roleId: employerRole.id,
       },
     });
   }
@@ -389,18 +429,19 @@ console.log(greeting);
 
   console.log('✅ Заполнение базы данных завершено!');
   console.log('📊 Созданные данные:');
-  console.log('- 3 роли (admin, user, mentor)');
+  console.log('- 4 роли (admin, employer, candidate, hr)');
   console.log('- 3 специализации (Frontend, Backend, Fullstack)');
   console.log('- 10 навыков');
-  console.log('- 3 пользователя');
+  console.log('- 4 пользователя');
   console.log('- 2 профиля');
   console.log('- 1 тест с 2 вопросами');
   console.log('- 1 учебный материал');
   console.log('');
   console.log('🔑 Тестовые аккаунты:');
   console.log('- admin@example.com / password123 (Администратор)');
-  console.log('- mentor@example.com / password123 (Ментор)');
-  console.log('- user@example.com / password123 (Пользователь)');
+  console.log('- hr@example.com / password123 (HR-специалист)');
+  console.log('- candidate@example.com / password123 (Кандидат)');
+  console.log('- employer@example.com / password123 (Работодатель)');
 }
 
 main()
