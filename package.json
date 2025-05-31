@@ -1,0 +1,12 @@
+{
+  "name": "nngp-fullstack",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "bash start.sh",
+    "build": "cd server && npm run build"
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
+  }
+} 
