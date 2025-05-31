@@ -1,5 +1,6 @@
 import { INestApplication, Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { railwayConfig } from './config/railway.config';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -16,12 +17,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         'Available env vars:',
         Object.keys(process.env).filter((key) => key.includes('DATABASE')),
       );
+      console.log('Using fallback from railwayConfig');
     }
 
     super({
       datasources: {
         db: {
-          url: process.env.DATABASE_URL,
+          url: railwayConfig.DATABASE_URL,
         },
       },
     });
