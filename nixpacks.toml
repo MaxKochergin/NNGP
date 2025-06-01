@@ -11,4 +11,4 @@ cmds = [
 ]
 
 [start]
-cmd = 'echo "DATABASE_URL=postgresql://postgres:tcHTDfzKOwYTWbiZjrjImmkwOfUWaCwS@postgres.railway.internal:5432/railway" > .env && npx prisma migrate deploy && npm run seed && npm run start:prod' 
+cmd = 'echo "DATABASE_URL=postgresql://postgres:tcHTDfzKOwYTWbiZjrjImmkwOfUWaCwS@postgres.railway.internal:5432/railway\nJWT_SECRET=super-secret-key-123\nNODE_ENV=production\nPORT=8080\nCORS_ORIGIN=https://nngp.vercel.app" > .env && npx prisma migrate deploy && npm run seed && npm run start:prod' 
