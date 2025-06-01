@@ -8,6 +8,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { PrismaService } from '../../prisma.service';
 
+console.log('🔐 Loading AuthModule...');
+console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
+
 @Module({
   imports: [
     UsersModule,
@@ -21,4 +24,8 @@ import { PrismaService } from '../../prisma.service';
   controllers: [AuthController],
   exports: [AuthService],
 })
-export class AuthModule {}
+export class AuthModule {
+  constructor() {
+    console.log('✅ AuthModule initialized successfully');
+  }
+}

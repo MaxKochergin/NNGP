@@ -65,8 +65,15 @@ async function bootstrap() {
 
     await app.listen(port, '0.0.0.0');
     console.log(`🎉 Application successfully started on port ${port}`);
-    console.log(`📖 API Documentation: http://localhost:${port}/api/docs`);
-    console.log(`🌐 Health check: http://localhost:${port}/api`);
+    console.log(
+      `�� API Documentation: https://diplomatic-determination-production.up.railway.app/api/docs`,
+    );
+    console.log(
+      `🌐 Health check: https://diplomatic-determination-production.up.railway.app/api`,
+    );
+    console.log(
+      `🔗 Base URL: https://diplomatic-determination-production.up.railway.app`,
+    );
   } catch (error) {
     console.error('💥 Failed to start application:', error);
     console.error('Stack trace:', error.stack);
