@@ -1,3 +1,7 @@
+// Загружаем .env файл ПЕРВЫМ делом
+import { config } from 'dotenv';
+config();
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -8,6 +12,10 @@ async function bootstrap() {
   console.log('NODE_ENV:', process.env.NODE_ENV);
   console.log('PORT:', process.env.PORT);
   console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+  console.log(
+    'DATABASE_URL value:',
+    process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+  );
   console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
   console.log('CORS_ORIGIN:', process.env.CORS_ORIGIN);
   console.log(
@@ -19,20 +27,15 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  // CORS configuration
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://nngp.vercel.app',
-    process.env.CORS_ORIGIN,
-  ].filter(Boolean);
-
+  // CORS configuration - временно разрешаем все origins для отладки
   app.enableCors({
-    origin: allowedOrigins,
+    origin: true, // Разрешить все origins
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
-  console.log('CORS allowed origins:', allowedOrigins);
+  console.log('CORS: разрешены ВСЕ origins для отладки');
 
   // Global API prefix
   app.setGlobalPrefix('api');
