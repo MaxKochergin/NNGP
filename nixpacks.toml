@@ -11,4 +11,4 @@ cmds = [
 ]
 
 [start]
-cmd = 'echo "=== DEBUG: Railway Environment Variables ===" && env | grep -E "(DATABASE_URL|JWT_SECRET|NODE_ENV|PORT|CORS_ORIGIN)" && echo "=== Creating .env file ===" && echo "DATABASE_URL=$DATABASE_URL\nJWT_SECRET=$JWT_SECRET\nNODE_ENV=$NODE_ENV\nPORT=$PORT\nCORS_ORIGIN=$CORS_ORIGIN" > .env && echo "=== .env file contents ===" && cat .env && npx prisma migrate deploy && npm run seed && npm run start:prod' 
+cmd = 'echo "=== Railway Environment Variables ===" && env | grep -E "(DATABASE_URL|JWT_SECRET|NODE_ENV|PORT|CORS_ORIGIN)" && npx prisma migrate deploy && npm run seed && npm run start:prod' 
