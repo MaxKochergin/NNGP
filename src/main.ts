@@ -20,10 +20,19 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // CORS configuration
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://nngp.vercel.app',
+    process.env.CORS_ORIGIN,
+  ].filter(Boolean);
+
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:5173'],
+    origin: allowedOrigins,
     credentials: true,
   });
+
+  console.log('CORS allowed origins:', allowedOrigins);
 
   // Global API prefix
   app.setGlobalPrefix('api');
