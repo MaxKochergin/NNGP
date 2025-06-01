@@ -11,4 +11,4 @@ cmds = [
 ]
 
 [start]
-cmd = 'echo "=== Railway Environment Variables ===" && env | grep -E "(DATABASE_URL|JWT_SECRET|NODE_ENV|PORT|CORS_ORIGIN)" && export DATABASE_URL="$DATABASE_URL" && export JWT_SECRET="$JWT_SECRET" && export NODE_ENV="$NODE_ENV" && export PORT="$PORT" && export CORS_ORIGIN="$CORS_ORIGIN" && npx prisma migrate deploy && npm run seed && npm run start:prod' 
+cmd = 'echo "=== Creating .env file ===" && echo "DATABASE_URL=postgresql://postgres:tcHTDfzKOwYTWbiZjrjImmkwOfUWaCwS@postgres.railway.internal:5432/railway" > .env && echo "JWT_SECRET=super-secret-key-123" >> .env && echo "NODE_ENV=production" >> .env && echo "PORT=8080" >> .env && echo "CORS_ORIGIN=https://nngp.vercel.app" >> .env && echo "=== .env contents ===" && cat .env && echo "=== Railway vars ===" && env | grep -E "(DATABASE_URL|JWT_SECRET)" && npx prisma migrate deploy && npm run seed && npm run start:prod' 
