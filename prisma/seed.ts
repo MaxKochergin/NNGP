@@ -132,7 +132,7 @@ async function main() {
 
   // 4. Создаем пользователей
   console.log('👥 Создаем пользователей...');
-  const passwordHash = await bcrypt.hash('password123', 10);
+  const passwordHash = await bcrypt.hash('Password123', 10);
 
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@example.com' },
@@ -438,10 +438,10 @@ console.log(greeting);
   console.log('- 1 учебный материал');
   console.log('');
   console.log('🔑 Тестовые аккаунты:');
-  console.log('- admin@example.com / password123 (Администратор)');
-  console.log('- hr@example.com / password123 (HR-специалист)');
-  console.log('- candidate@example.com / password123 (Кандидат)');
-  console.log('- employer@example.com / password123 (Работодатель)');
+  console.log('- admin@example.com / Password123 (Администратор)');
+  console.log('- hr@example.com / Password123 (HR-специалист)');
+  console.log('- candidate@example.com / Password123 (Кандидат)');
+  console.log('- employer@example.com / Password123 (Работодатель)');
 }
 
 main()
