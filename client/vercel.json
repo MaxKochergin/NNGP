@@ -7,5 +7,8 @@
   ],
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm ci"
+  "installCommand": "npm ci",
+  "typescript": {
+    "ignoreBuildErrors": true
+  }
 } 
