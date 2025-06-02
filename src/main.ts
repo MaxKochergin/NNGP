@@ -14,16 +14,11 @@ async function bootstrap() {
     console.log('PORT:', process.env.PORT);
     console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
     console.log(
-      'DATABASE_URL value:',
-      process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+      'DATABASE_URL preview:',
+      process.env.DATABASE_URL?.substring(0, 50) + '...',
     );
     console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
     console.log('CORS_ORIGIN:', process.env.CORS_ORIGIN);
-    console.log(
-      'All env vars with DATABASE:',
-      Object.keys(process.env).filter((key) => key.includes('DATABASE')),
-    );
-    console.log('Total env vars count:', Object.keys(process.env).length);
     console.log('===================================');
 
     console.log('🚀 Creating NestJS application...');
@@ -66,7 +61,7 @@ async function bootstrap() {
     await app.listen(port, '0.0.0.0');
     console.log(`🎉 Application successfully started on port ${port}`);
     console.log(
-      `�� API Documentation: https://diplomatic-determination-production.up.railway.app/api/docs`,
+      `📚 API Documentation: https://diplomatic-determination-production.up.railway.app/api/docs`,
     );
     console.log(
       `🌐 Health check: https://diplomatic-determination-production.up.railway.app/api`,

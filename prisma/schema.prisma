@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model User {
@@ -189,7 +190,7 @@ model Test {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  createdBy           User  @relation("TestCreator", fields: [createdById], references: [id])
+  createdBy           User                 @relation("TestCreator", fields: [createdById], references: [id])
   questions           Question[]
   specializationTests SpecializationTest[]
   testAttempts        TestAttempt[]
