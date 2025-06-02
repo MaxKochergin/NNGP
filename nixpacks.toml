@@ -11,4 +11,4 @@ cmds = [
 ]
 
 [start]
-cmd = 'echo "=== Railway Deploy Debug ===" && echo "DATABASE_URL=postgresql://postgres:tcHTDfzKOwYTWbiZjrjImmkwOfUWaCwS@postgres.railway.internal:5432/railway?sslmode=require" > .env && echo "JWT_SECRET=super-secret-key-123" >> .env && echo "NODE_ENV=production" >> .env && echo "CORS_ORIGIN=https://nngp.vercel.app" >> .env && echo "=== Running Prisma Migrate ===" && npx prisma migrate deploy && echo "=== Migrate Complete, Starting App ===" && npm run start:prod' 
+cmd = 'echo "=== Railway Deploy Debug ===" && echo "DATABASE_URL=postgresql://postgres:tcHTDfzKOwYTWbiZjrjImmkwOfUWaCwS@postgres.railway.internal:5432/railway" > .env && echo "JWT_SECRET=super-secret-key-123" >> .env && echo "NODE_ENV=production" >> .env && echo "CORS_ORIGIN=https://nngp.vercel.app" >> .env && echo "=== Running Prisma Migrate ===" && npx prisma migrate deploy && echo "=== Migrate Complete, Starting App ===" && npm run start:prod' 
