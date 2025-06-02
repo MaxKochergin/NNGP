@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Close as CloseIcon } from '@mui/icons-material';
+import { Close as CloseIcon, DragHandle as DragHandleIcon } from '@mui/icons-material';
 import {
   Box,
   Button,
+  Chip,
+  Collapse,
   Divider,
   FormControl,
   FormControlLabel,
@@ -78,7 +80,13 @@ const hirePeriods = [
 
 const EmployeeFilters = ({ onClose, onApply, onClear }: EmployeeFiltersProps) => {
   const theme = useTheme();
+
+  // Расширенные breakpoints для лучшей адаптивности
+  const isXSmall = useMediaQuery('(max-width:320px)');
+  const isVerySmall = useMediaQuery('(max-width:375px)');
+  const isSmall = useMediaQuery('(max-width:480px)');
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   const [status, setStatus] = useState('any');
   const [department, setDepartment] = useState('any');
@@ -99,6 +107,30 @@ const EmployeeFilters = ({ onClose, onApply, onClear }: EmployeeFiltersProps) =>
     onApply(filters);
   };
 
+  const handleClearFilters = () => {
+    setStatus('any');
+    setDepartment('any');
+    setPosition('any');
+    setExperience('any');
+    setHirePeriod('any');
+    setShowDismissed(false);
+    onClear();
+  };
+
+  // Подсчет активных фильтров
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (status !== 'any') count++;
+    if (department !== 'any') count++;
+    if (position !== 'any') count++;
+    if (experience !== 'any') count++;
+    if (hirePeriod !== 'any') count++;
+    if (showDismissed) count++;
+    return count;
+  };
+
+  const activeFiltersCount = getActiveFiltersCount();
+
   return (
     <Box
       sx={{
@@ -106,42 +138,124 @@ const EmployeeFilters = ({ onClose, onApply, onClear }: EmployeeFiltersProps) =>
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        position: 'relative',
       }}
     >
+      {/* Drag handle для мобильных */}
+      {isMobile && (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            py: 1,
+            cursor: 'grab',
+            '&:active': {
+              cursor: 'grabbing',
+            },
+          }}
+        >
+          <Box
+            sx={{
+              width: 40,
+              height: 4,
+              bgcolor: 'grey.300',
+              borderRadius: 2,
+            }}
+          />
+        </Box>
+      )}
+
+      {/* Заголовок */}
       <Box
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          mb: { xs: 1, sm: 2 },
+          mb: { xs: isXSmall ? 1 : 1.5, sm: 2 },
+          px: { xs: 0, sm: 0 },
         }}
       >
-        <Typography
-          variant="h6"
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 'bold',
+              fontSize: {
+                xs: isXSmall ? '1rem' : isVerySmall ? '1.05rem' : '1.1rem',
+                sm: '1.25rem',
+              },
+            }}
+          >
+            Фильтры
+          </Typography>
+          {activeFiltersCount > 0 && (
+            <Chip
+              label={activeFiltersCount}
+              size="small"
+              color="primary"
+              sx={{
+                height: { xs: 20, sm: 24 },
+                fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                minWidth: { xs: 20, sm: 24 },
+                '& .MuiChip-label': {
+                  px: { xs: 0.5, sm: 1 },
+                },
+              }}
+            />
+          )}
+        </Box>
+
+        <IconButton
+          onClick={onClose}
+          size={isXSmall ? 'small' : 'medium'}
           sx={{
-            fontWeight: 'bold',
-            fontSize: { xs: '1.1rem', sm: '1.25rem' },
+            ml: 1,
+            p: { xs: 0.5, sm: 1 },
           }}
         >
-          Фильтры сотрудников
-        </Typography>
-        <IconButton onClick={onClose} size="small" sx={{ ml: 1 }}>
-          <CloseIcon />
+          <CloseIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
         </IconButton>
       </Box>
 
-      <Divider sx={{ mb: { xs: 2, sm: 3 } }} />
+      <Divider sx={{ mb: { xs: isXSmall ? 1.5 : 2, sm: 3 } }} />
 
+      {/* Фильтры */}
       <Stack
-        spacing={{ xs: 2, sm: 3 }}
+        spacing={{ xs: isXSmall ? 1.5 : 2, sm: 3 }}
         sx={{
           flexGrow: 1,
           overflow: 'auto',
           pr: { xs: 0, sm: 1 },
           pb: 1,
+          // Улучшенная прокрутка для мобильных
+          '&::-webkit-scrollbar': {
+            width: { xs: 4, sm: 6 },
+          },
+          '&::-webkit-scrollbar-track': {
+            bgcolor: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: 'grey.300',
+            borderRadius: 3,
+            '&:hover': {
+              bgcolor: 'grey.400',
+            },
+          },
         }}
       >
-        <FormControl fullWidth size={isMobile ? 'small' : 'medium'}>
+        {/* Статус */}
+        <FormControl
+          fullWidth
+          size={isMobile ? 'small' : 'medium'}
+          sx={{
+            '& .MuiInputLabel-root': {
+              fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+            },
+            '& .MuiSelect-select': {
+              fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+            },
+          }}
+        >
           <InputLabel id="status-label">Статус</InputLabel>
           <Select
             labelId="status-label"
@@ -149,6 +263,18 @@ const EmployeeFilters = ({ onClose, onApply, onClear }: EmployeeFiltersProps) =>
             value={status}
             label="Статус"
             onChange={e => setStatus(e.target.value)}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  maxHeight: { xs: 200, sm: 300 },
+                  '& .MuiMenuItem-root': {
+                    fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+                    minHeight: { xs: 36, sm: 48 },
+                    px: { xs: 1.5, sm: 2 },
+                  },
+                },
+              },
+            }}
           >
             {statuses.map(option => (
               <MenuItem key={option.value} value={option.value}>
@@ -158,7 +284,19 @@ const EmployeeFilters = ({ onClose, onApply, onClear }: EmployeeFiltersProps) =>
           </Select>
         </FormControl>
 
-        <FormControl fullWidth size={isMobile ? 'small' : 'medium'}>
+        {/* Отдел */}
+        <FormControl
+          fullWidth
+          size={isMobile ? 'small' : 'medium'}
+          sx={{
+            '& .MuiInputLabel-root': {
+              fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+            },
+            '& .MuiSelect-select': {
+              fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+            },
+          }}
+        >
           <InputLabel id="department-label">Отдел</InputLabel>
           <Select
             labelId="department-label"
@@ -166,16 +304,42 @@ const EmployeeFilters = ({ onClose, onApply, onClear }: EmployeeFiltersProps) =>
             value={department}
             label="Отдел"
             onChange={e => setDepartment(e.target.value)}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  maxHeight: { xs: 200, sm: 300 },
+                  '& .MuiMenuItem-root': {
+                    fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+                    minHeight: { xs: 36, sm: 48 },
+                    px: { xs: 1.5, sm: 2 },
+                  },
+                },
+              },
+            }}
           >
             {departments.map(option => (
               <MenuItem key={option.value} value={option.value}>
-                {option.label}
+                {isXSmall && option.label.length > 20
+                  ? `${option.label.substring(0, 20)}...`
+                  : option.label}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
 
-        <FormControl fullWidth size={isMobile ? 'small' : 'medium'}>
+        {/* Должность */}
+        <FormControl
+          fullWidth
+          size={isMobile ? 'small' : 'medium'}
+          sx={{
+            '& .MuiInputLabel-root': {
+              fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+            },
+            '& .MuiSelect-select': {
+              fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+            },
+          }}
+        >
           <InputLabel id="position-label">Должность</InputLabel>
           <Select
             labelId="position-label"
@@ -183,16 +347,42 @@ const EmployeeFilters = ({ onClose, onApply, onClear }: EmployeeFiltersProps) =>
             value={position}
             label="Должность"
             onChange={e => setPosition(e.target.value)}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  maxHeight: { xs: 200, sm: 300 },
+                  '& .MuiMenuItem-root': {
+                    fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+                    minHeight: { xs: 36, sm: 48 },
+                    px: { xs: 1.5, sm: 2 },
+                  },
+                },
+              },
+            }}
           >
             {positions.map(option => (
               <MenuItem key={option.value} value={option.value}>
-                {option.label}
+                {isXSmall && option.label.length > 25
+                  ? `${option.label.substring(0, 25)}...`
+                  : option.label}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
 
-        <FormControl fullWidth size={isMobile ? 'small' : 'medium'}>
+        {/* Опыт работы */}
+        <FormControl
+          fullWidth
+          size={isMobile ? 'small' : 'medium'}
+          sx={{
+            '& .MuiInputLabel-root': {
+              fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+            },
+            '& .MuiSelect-select': {
+              fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+            },
+          }}
+        >
           <InputLabel id="experience-label">Опыт работы</InputLabel>
           <Select
             labelId="experience-label"
@@ -200,6 +390,18 @@ const EmployeeFilters = ({ onClose, onApply, onClear }: EmployeeFiltersProps) =>
             value={experience}
             label="Опыт работы"
             onChange={e => setExperience(e.target.value)}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  maxHeight: { xs: 200, sm: 300 },
+                  '& .MuiMenuItem-root': {
+                    fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+                    minHeight: { xs: 36, sm: 48 },
+                    px: { xs: 1.5, sm: 2 },
+                  },
+                },
+              },
+            }}
           >
             {experienceRanges.map(option => (
               <MenuItem key={option.value} value={option.value}>
@@ -209,14 +411,40 @@ const EmployeeFilters = ({ onClose, onApply, onClear }: EmployeeFiltersProps) =>
           </Select>
         </FormControl>
 
-        <FormControl fullWidth size={isMobile ? 'small' : 'medium'}>
-          <InputLabel id="hire-period-label">Период приема на работу</InputLabel>
+        {/* Период приема */}
+        <FormControl
+          fullWidth
+          size={isMobile ? 'small' : 'medium'}
+          sx={{
+            '& .MuiInputLabel-root': {
+              fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+            },
+            '& .MuiSelect-select': {
+              fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+            },
+          }}
+        >
+          <InputLabel id="hire-period-label">
+            {isXSmall ? 'Период приема' : 'Период приема на работу'}
+          </InputLabel>
           <Select
             labelId="hire-period-label"
             id="hire-period-select"
             value={hirePeriod}
-            label="Период приема на работу"
+            label={isXSmall ? 'Период приема' : 'Период приема на работу'}
             onChange={e => setHirePeriod(e.target.value)}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  maxHeight: { xs: 200, sm: 300 },
+                  '& .MuiMenuItem-root': {
+                    fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+                    minHeight: { xs: 36, sm: 48 },
+                    px: { xs: 1.5, sm: 2 },
+                  },
+                },
+              },
+            }}
           >
             {hirePeriods.map(option => (
               <MenuItem key={option.value} value={option.value}>
@@ -226,25 +454,53 @@ const EmployeeFilters = ({ onClose, onApply, onClear }: EmployeeFiltersProps) =>
           </Select>
         </FormControl>
 
+        {/* Переключатель уволенных */}
         <FormGroup>
           <FormControlLabel
             control={
-              <Switch checked={showDismissed} onChange={e => setShowDismissed(e.target.checked)} />
+              <Switch
+                checked={showDismissed}
+                onChange={e => setShowDismissed(e.target.checked)}
+                size={isXSmall ? 'small' : 'medium'}
+              />
             }
-            label="Показывать уволенных"
+            label={isXSmall ? 'Уволенные' : 'Показывать уволенных'}
             sx={{
               '& .MuiFormControlLabel-label': {
-                fontSize: { xs: '0.9rem', sm: '1rem' },
+                fontSize: {
+                  xs: isXSmall ? '0.85rem' : '0.9rem',
+                  sm: '1rem',
+                },
+              },
+              '& .MuiSwitch-root': {
+                mr: { xs: 1, sm: 2 },
               },
             }}
           />
         </FormGroup>
       </Stack>
 
-      <Divider sx={{ my: { xs: 2, sm: 3 } }} />
+      <Divider sx={{ my: { xs: isXSmall ? 1.5 : 2, sm: 3 } }} />
 
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button variant="outlined" fullWidth onClick={onClear} size={isMobile ? 'medium' : 'large'}>
+      {/* Кнопки действий */}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: { xs: 1, sm: 2 },
+          flexDirection: { xs: isXSmall ? 'column' : 'row', sm: 'row' },
+        }}
+      >
+        <Button
+          variant="outlined"
+          fullWidth
+          onClick={handleClearFilters}
+          size={isMobile ? 'medium' : 'large'}
+          sx={{
+            fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+            py: { xs: 1, sm: 1.5 },
+            minHeight: { xs: 40, sm: 48 },
+          }}
+        >
           Сбросить
         </Button>
         <Button
@@ -252,8 +508,13 @@ const EmployeeFilters = ({ onClose, onApply, onClear }: EmployeeFiltersProps) =>
           fullWidth
           onClick={handleApplyFilters}
           size={isMobile ? 'medium' : 'large'}
+          sx={{
+            fontSize: { xs: isXSmall ? '0.85rem' : '0.9rem', sm: '1rem' },
+            py: { xs: 1, sm: 1.5 },
+            minHeight: { xs: 40, sm: 48 },
+          }}
         >
-          Применить
+          Применить {activeFiltersCount > 0 && `(${activeFiltersCount})`}
         </Button>
       </Box>
     </Box>

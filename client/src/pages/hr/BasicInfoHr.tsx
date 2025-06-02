@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Cancel, Edit, Email, LocationOn, Phone, Save } from '@mui/icons-material';
 import {
   Alert,
   Avatar,
   Box,
   Button,
-  Grid,
   Paper,
   Snackbar,
   TextField,
@@ -13,28 +12,15 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { useAppSelector } from '../../app/hooks';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { selectBasicInfo, updateBasicInfo, type BasicInfo } from '../../features/hr/hrProfileSlice';
 
-interface ProfileData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  location: string;
-  aboutMe: string;
-}
+function BasicInfoHr() {
+  const dispatch = useAppDispatch();
+  const basicInfo = useAppSelector(selectBasicInfo);
 
-function BasicInfo() {
   const [editing, setEditing] = useState(false);
-  const [profileData, setProfileData] = useState<ProfileData>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    location: '',
-    aboutMe: '',
-  });
-  const [formData, setFormData] = useState<ProfileData>(profileData);
+  const [formData, setFormData] = useState<BasicInfo>(basicInfo);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -44,32 +30,9 @@ function BasicInfo() {
 
   const theme = useTheme();
   const isXSmall = useMediaQuery('(max-width:320px)');
+  const isVerySmall = useMediaQuery('(max-width:375px)');
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
-  const user = useAppSelector(state => state.auth.user);
-
-  // Загрузка данных профиля
-  useEffect(() => {
-    // В реальном приложении здесь был бы API запрос
-    // Имитируем получение данных с сервера
-    const fetchProfileData = async () => {
-      // Для демо используем заглушку
-      const mockData = {
-        firstName: user?.firstName || 'Елена',
-        lastName: user?.lastName || 'Смирнова',
-        email: user?.email || 'hr1@example.com',
-        phone: '+7 999 123-45-67',
-        location: 'Москва',
-        aboutMe:
-          'HR-специалист с 5-летним опытом работы в подборе технических специалистов для строительных компаний. Специализируюсь на найме инженеров ПГС, проектировщиков и BIM-специалистов. Провожу собеседования, оцениваю профессиональные навыки кандидатов, разрабатываю программы адаптации новых сотрудников. Эксперт в области оценки компетенций инженерно-технического персонала. Имею опыт организации корпоративного обучения для сотрудников различных направлений.',
-      };
-
-      setProfileData(mockData);
-      setFormData(mockData);
-    };
-
-    fetchProfileData();
-  }, [user]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -80,24 +43,23 @@ function BasicInfo() {
     setEditing(!editing);
     if (!editing) {
       // При включении режима редактирования копируем данные в форму
-      setFormData({ ...profileData });
+      setFormData({ ...basicInfo });
     }
   };
 
   const handleCancel = () => {
     setEditing(false);
-    setFormData({ ...profileData });
+    setFormData({ ...basicInfo });
   };
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      // В реальном приложении здесь был бы API запрос для сохранения
       // Имитируем запрос к серверу с задержкой
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Обновляем данные профиля
-      setProfileData({ ...formData });
+      // Обновляем данные в Redux store
+      dispatch(updateBasicInfo(formData));
       setEditing(false);
 
       // Показываем уведомление об успехе
@@ -123,49 +85,52 @@ function BasicInfo() {
   };
 
   return (
-    <Box sx={{ px: isXSmall ? 0.5 : 2 }}>
+    <Box sx={{ px: isVerySmall ? 0.5 : isXSmall ? 0.5 : 2 }}>
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
           mt: 0,
           ml: 0,
-          gap: 2,
+          gap: isVerySmall ? 1.5 : 2,
         }}
       >
         {/* На мобильных устройствах - одна колонка, на планшетах и десктопах - две */}
         <Box sx={{ width: '100%' }}>
           <Paper
             sx={{
-              p: { xs: isXSmall ? 1 : 1.5, sm: 2 },
+              p: {
+                xs: isVerySmall ? 1 : isXSmall ? 1 : 1.5,
+                sm: 2,
+              },
               display: 'flex',
-              flexDirection: isXSmall ? 'column' : isMobile ? 'row' : 'column',
-              alignItems: isXSmall ? 'center' : isMobile ? 'flex-start' : 'center',
-              gap: isXSmall ? 1 : 2,
+              flexDirection: isVerySmall || isXSmall ? 'column' : isMobile ? 'row' : 'column',
+              alignItems: isVerySmall || isXSmall ? 'center' : isMobile ? 'flex-start' : 'center',
+              gap: isVerySmall ? 1 : isXSmall ? 1 : 2,
             }}
           >
             <Avatar
               sx={{
-                width: isXSmall ? 60 : isMobile ? 80 : isTablet ? 100 : 120,
-                height: isXSmall ? 60 : isMobile ? 80 : isTablet ? 100 : 120,
-                mb: isXSmall || isMobile ? 0 : 2,
+                width: isVerySmall ? 50 : isXSmall ? 60 : isMobile ? 80 : isTablet ? 100 : 120,
+                height: isVerySmall ? 50 : isXSmall ? 60 : isMobile ? 80 : isTablet ? 100 : 120,
+                mb: isVerySmall || isXSmall || isMobile ? 0 : 2,
                 bgcolor: 'primary.main',
-                fontSize: isXSmall ? 24 : isMobile ? 28 : 36,
+                fontSize: isVerySmall ? 20 : isXSmall ? 24 : isMobile ? 28 : 36,
               }}
-              alt={`${profileData.firstName} ${profileData.lastName}`}
-              src="/path-to-avatar.jpg" // Замените на реальный путь к аватару
+              alt={`${basicInfo.firstName} ${basicInfo.lastName}`}
+              src={basicInfo.avatar} // Используем avatar из store
             >
-              {profileData.firstName.charAt(0)}
-              {profileData.lastName.charAt(0)}
+              {basicInfo.firstName.charAt(0)}
+              {basicInfo.lastName.charAt(0)}
             </Avatar>
 
             <Box
               sx={{
                 flex: 1,
-                width: isXSmall ? '100%' : isMobile ? 'auto' : '100%',
+                width: isVerySmall || isXSmall ? '100%' : isMobile ? 'auto' : '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: isXSmall ? 'center' : 'flex-start',
+                alignItems: isVerySmall || isXSmall ? 'center' : 'flex-start',
               }}
             >
               {editing ? (
@@ -178,6 +143,14 @@ function BasicInfo() {
                     value={formData.firstName}
                     onChange={handleInputChange}
                     size="small"
+                    sx={{
+                      '& .MuiInputBase-input': {
+                        fontSize: isVerySmall ? '0.8rem' : undefined,
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: isVerySmall ? '0.8rem' : undefined,
+                      },
+                    }}
                   />
                   <TextField
                     fullWidth
@@ -187,20 +160,32 @@ function BasicInfo() {
                     value={formData.lastName}
                     onChange={handleInputChange}
                     size="small"
+                    sx={{
+                      '& .MuiInputBase-input': {
+                        fontSize: isVerySmall ? '0.8rem' : undefined,
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: isVerySmall ? '0.8rem' : undefined,
+                      },
+                    }}
                   />
                 </Box>
               ) : (
                 <Typography
-                  variant={isXSmall ? 'h6' : isMobile ? 'h6' : 'h5'}
+                  variant={isVerySmall ? 'subtitle1' : isXSmall ? 'h6' : isMobile ? 'h6' : 'h5'}
                   gutterBottom
-                  align={isXSmall ? 'center' : isMobile ? 'left' : 'center'}
-                  sx={{ wordBreak: 'break-word', fontSize: isXSmall ? '1.1rem' : undefined }}
+                  align={isVerySmall || isXSmall ? 'center' : isMobile ? 'left' : 'center'}
+                  sx={{
+                    wordBreak: 'break-word',
+                    fontSize: isVerySmall ? '1rem' : isXSmall ? '1.1rem' : undefined,
+                    lineHeight: isVerySmall ? 1.2 : undefined,
+                  }}
                 >
-                  {profileData.firstName} {profileData.lastName}
+                  {basicInfo.firstName} {basicInfo.lastName}
                 </Typography>
               )}
 
-              <Box sx={{ width: '100%', mt: isXSmall ? 1 : isMobile ? 0 : 2 }}>
+              <Box sx={{ width: '100%', mt: isVerySmall ? 0.5 : isXSmall ? 1 : isMobile ? 0 : 2 }}>
                 {editing ? (
                   <>
                     <TextField
@@ -212,7 +197,17 @@ function BasicInfo() {
                       onChange={handleInputChange}
                       size="small"
                       InputProps={{
-                        startAdornment: <Email color="action" sx={{ mr: 1, fontSize: 18 }} />,
+                        startAdornment: (
+                          <Email color="action" sx={{ mr: 1, fontSize: isVerySmall ? 16 : 18 }} />
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiInputBase-input': {
+                          fontSize: isVerySmall ? '0.8rem' : undefined,
+                        },
+                        '& .MuiInputLabel-root': {
+                          fontSize: isVerySmall ? '0.8rem' : undefined,
+                        },
                       }}
                     />
                     <TextField
@@ -224,7 +219,17 @@ function BasicInfo() {
                       onChange={handleInputChange}
                       size="small"
                       InputProps={{
-                        startAdornment: <Phone color="action" sx={{ mr: 1, fontSize: 18 }} />,
+                        startAdornment: (
+                          <Phone color="action" sx={{ mr: 1, fontSize: isVerySmall ? 16 : 18 }} />
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiInputBase-input': {
+                          fontSize: isVerySmall ? '0.8rem' : undefined,
+                        },
+                        '& .MuiInputLabel-root': {
+                          fontSize: isVerySmall ? '0.8rem' : undefined,
+                        },
                       }}
                     />
                     <TextField
@@ -236,7 +241,20 @@ function BasicInfo() {
                       onChange={handleInputChange}
                       size="small"
                       InputProps={{
-                        startAdornment: <LocationOn color="action" sx={{ mr: 1, fontSize: 18 }} />,
+                        startAdornment: (
+                          <LocationOn
+                            color="action"
+                            sx={{ mr: 1, fontSize: isVerySmall ? 16 : 18 }}
+                          />
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiInputBase-input': {
+                          fontSize: isVerySmall ? '0.8rem' : undefined,
+                        },
+                        '& .MuiInputLabel-root': {
+                          fontSize: isVerySmall ? '0.8rem' : undefined,
+                        },
                       }}
                     />
                   </>
@@ -245,31 +263,34 @@ function BasicInfo() {
                     <Box
                       sx={{
                         display: 'flex',
-                        flexDirection: isXSmall ? 'column' : 'row',
-                        alignItems: isXSmall ? 'center' : 'flex-start',
-                        mb: 1,
+                        flexDirection: isVerySmall || isXSmall ? 'column' : 'row',
+                        alignItems: isVerySmall || isXSmall ? 'center' : 'flex-start',
+                        mb: isVerySmall ? 0.5 : 1,
                       }}
                     >
                       <Box
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          mb: isXSmall ? 0.5 : 0,
+                          mb: isVerySmall || isXSmall ? 0.5 : 0,
                         }}
                       >
                         <Email
                           color="action"
-                          sx={{ mr: 1, fontSize: isXSmall ? 16 : isMobile ? 18 : 24 }}
+                          sx={{
+                            mr: 1,
+                            fontSize: isVerySmall ? 14 : isXSmall ? 16 : isMobile ? 18 : 24,
+                          }}
                         />
                         <Typography
                           variant="body2"
                           sx={{
-                            fontSize: isXSmall ? '0.75rem' : undefined,
+                            fontSize: isVerySmall ? '0.7rem' : isXSmall ? '0.75rem' : undefined,
                             wordBreak: 'break-word',
-                            maxWidth: isXSmall ? '270px' : 'none',
+                            maxWidth: isVerySmall ? '250px' : isXSmall ? '270px' : 'none',
                           }}
                         >
-                          {profileData.email}
+                          {basicInfo.email}
                         </Typography>
                       </Box>
                     </Box>
@@ -277,27 +298,32 @@ function BasicInfo() {
                     <Box
                       sx={{
                         display: 'flex',
-                        flexDirection: isXSmall ? 'column' : 'row',
-                        alignItems: isXSmall ? 'center' : 'flex-start',
-                        mb: 1,
+                        flexDirection: isVerySmall || isXSmall ? 'column' : 'row',
+                        alignItems: isVerySmall || isXSmall ? 'center' : 'flex-start',
+                        mb: isVerySmall ? 0.5 : 1,
                       }}
                     >
                       <Box
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          mb: isXSmall ? 0.5 : 0,
+                          mb: isVerySmall || isXSmall ? 0.5 : 0,
                         }}
                       >
                         <Phone
                           color="action"
-                          sx={{ mr: 1, fontSize: isXSmall ? 16 : isMobile ? 18 : 24 }}
+                          sx={{
+                            mr: 1,
+                            fontSize: isVerySmall ? 14 : isXSmall ? 16 : isMobile ? 18 : 24,
+                          }}
                         />
                         <Typography
                           variant="body2"
-                          sx={{ fontSize: isXSmall ? '0.75rem' : undefined }}
+                          sx={{
+                            fontSize: isVerySmall ? '0.7rem' : isXSmall ? '0.75rem' : undefined,
+                          }}
                         >
-                          {profileData.phone}
+                          {basicInfo.phone}
                         </Typography>
                       </Box>
                     </Box>
@@ -305,27 +331,32 @@ function BasicInfo() {
                     <Box
                       sx={{
                         display: 'flex',
-                        flexDirection: isXSmall ? 'column' : 'row',
-                        alignItems: isXSmall ? 'center' : 'flex-start',
-                        mb: 1,
+                        flexDirection: isVerySmall || isXSmall ? 'column' : 'row',
+                        alignItems: isVerySmall || isXSmall ? 'center' : 'flex-start',
+                        mb: isVerySmall ? 0.5 : 1,
                       }}
                     >
                       <Box
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          mb: isXSmall ? 0.5 : 0,
+                          mb: isVerySmall || isXSmall ? 0.5 : 0,
                         }}
                       >
                         <LocationOn
                           color="action"
-                          sx={{ mr: 1, fontSize: isXSmall ? 16 : isMobile ? 18 : 24 }}
+                          sx={{
+                            mr: 1,
+                            fontSize: isVerySmall ? 14 : isXSmall ? 16 : isMobile ? 18 : 24,
+                          }}
                         />
                         <Typography
                           variant="body2"
-                          sx={{ fontSize: isXSmall ? '0.75rem' : undefined }}
+                          sx={{
+                            fontSize: isVerySmall ? '0.7rem' : isXSmall ? '0.75rem' : undefined,
+                          }}
                         >
-                          {profileData.location}
+                          {basicInfo.location}
                         </Typography>
                       </Box>
                     </Box>
@@ -338,10 +369,10 @@ function BasicInfo() {
                   variant="outlined"
                   startIcon={<Edit />}
                   sx={{
-                    mt: 2,
-                    display: isXSmall || isMobile ? 'none' : 'flex',
-                    width: isXSmall || isMobile ? 'auto' : '100%',
-                    fontSize: isXSmall ? '0.7rem' : undefined,
+                    mt: isVerySmall ? 1.5 : 2,
+                    display: isVerySmall || isXSmall || isMobile ? 'none' : 'flex',
+                    width: isVerySmall || isXSmall || isMobile ? 'auto' : '100%',
+                    fontSize: isVerySmall ? '0.65rem' : isXSmall ? '0.7rem' : undefined,
                   }}
                   onClick={handleEdit}
                 >
@@ -350,8 +381,8 @@ function BasicInfo() {
               ) : (
                 <Box
                   sx={{
-                    mt: 2,
-                    display: isXSmall || isMobile ? 'none' : 'flex',
+                    mt: isVerySmall ? 1.5 : 2,
+                    display: isVerySmall || isXSmall || isMobile ? 'none' : 'flex',
                     flexDirection: 'column',
                     gap: 1,
                     width: '100%',
@@ -362,7 +393,7 @@ function BasicInfo() {
                     startIcon={<Save />}
                     onClick={handleSave}
                     disabled={loading}
-                    sx={{ fontSize: isXSmall ? '0.7rem' : undefined }}
+                    sx={{ fontSize: isVerySmall ? '0.65rem' : isXSmall ? '0.7rem' : undefined }}
                   >
                     Сохранить
                   </Button>
@@ -371,7 +402,7 @@ function BasicInfo() {
                     startIcon={<Cancel />}
                     onClick={handleCancel}
                     disabled={loading}
-                    sx={{ fontSize: isXSmall ? '0.7rem' : undefined }}
+                    sx={{ fontSize: isVerySmall ? '0.65rem' : isXSmall ? '0.7rem' : undefined }}
                   >
                     Отмена
                   </Button>
@@ -381,14 +412,20 @@ function BasicInfo() {
           </Paper>
 
           {/* Кнопки для мобильных устройств - отдельно от карточки */}
-          {(isXSmall || isMobile) && (
-            <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {(isVerySmall || isXSmall || isMobile) && (
+            <Box
+              sx={{ mt: isVerySmall ? 1.5 : 2, display: 'flex', flexDirection: 'column', gap: 1 }}
+            >
               {!editing ? (
                 <Button
                   variant="outlined"
                   startIcon={<Edit />}
-                  size={isXSmall ? 'small' : 'medium'}
-                  sx={{ width: '100%', fontSize: isXSmall ? '0.7rem' : undefined }}
+                  size={isVerySmall || isXSmall ? 'small' : 'medium'}
+                  sx={{
+                    width: '100%',
+                    fontSize: isVerySmall ? '0.65rem' : isXSmall ? '0.7rem' : undefined,
+                    py: isVerySmall ? 0.75 : undefined,
+                  }}
                   onClick={handleEdit}
                 >
                   Редактировать
@@ -398,20 +435,28 @@ function BasicInfo() {
                   <Button
                     variant="contained"
                     startIcon={<Save />}
-                    size={isXSmall ? 'small' : 'medium'}
-                    sx={{ width: '100%', fontSize: isXSmall ? '0.7rem' : undefined }}
                     onClick={handleSave}
                     disabled={loading}
+                    size={isVerySmall || isXSmall ? 'small' : 'medium'}
+                    sx={{
+                      width: '100%',
+                      fontSize: isVerySmall ? '0.65rem' : isXSmall ? '0.7rem' : undefined,
+                      py: isVerySmall ? 0.75 : undefined,
+                    }}
                   >
                     Сохранить
                   </Button>
                   <Button
                     variant="outlined"
                     startIcon={<Cancel />}
-                    size={isXSmall ? 'small' : 'medium'}
-                    sx={{ width: '100%', fontSize: isXSmall ? '0.7rem' : undefined }}
                     onClick={handleCancel}
                     disabled={loading}
+                    size={isVerySmall || isXSmall ? 'small' : 'medium'}
+                    sx={{
+                      width: '100%',
+                      fontSize: isVerySmall ? '0.65rem' : isXSmall ? '0.7rem' : undefined,
+                      py: isVerySmall ? 0.75 : undefined,
+                    }}
                   >
                     Отмена
                   </Button>
@@ -422,18 +467,23 @@ function BasicInfo() {
         </Box>
 
         <Box sx={{ width: '100%' }}>
-          <Paper sx={{ p: { xs: isXSmall ? 1 : 1.5, sm: 2 } }}>
+          <Paper sx={{ p: { xs: isVerySmall ? 0.75 : isXSmall ? 1 : 1.5, sm: 2 } }}>
             <Box
               sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                mb: isXSmall ? 1 : 2,
+                mb: isVerySmall ? 0.75 : isXSmall ? 1 : 2,
               }}
             >
               <Typography
-                variant={isXSmall ? 'body1' : isMobile ? 'subtitle1' : 'h6'}
-                sx={{ fontWeight: isXSmall ? 'bold' : undefined }}
+                variant={
+                  isVerySmall ? 'subtitle2' : isXSmall ? 'body1' : isMobile ? 'subtitle1' : 'h6'
+                }
+                sx={{
+                  fontWeight: isVerySmall || isXSmall ? 'bold' : undefined,
+                  fontSize: isVerySmall ? '0.85rem' : undefined,
+                }}
               >
                 О себе
               </Typography>
@@ -443,24 +493,39 @@ function BasicInfo() {
               <TextField
                 fullWidth
                 multiline
-                rows={isXSmall ? 2 : isMobile ? 3 : 4}
+                rows={isVerySmall ? 2 : isXSmall ? 2 : isMobile ? 3 : 4}
                 variant="outlined"
                 placeholder="Расскажите о себе"
                 name="aboutMe"
                 value={formData.aboutMe}
                 onChange={handleInputChange}
-                sx={{ mb: isXSmall ? 1 : 2 }}
+                sx={{
+                  mb: isVerySmall ? 0.75 : isXSmall ? 1 : 2,
+                  '& .MuiInputBase-input': {
+                    fontSize: isVerySmall ? '0.75rem' : isXSmall ? '0.8rem' : undefined,
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontSize: isVerySmall ? '0.75rem' : isXSmall ? '0.8rem' : undefined,
+                  },
+                }}
               />
             ) : (
               <Typography
                 variant="body1"
                 paragraph
                 sx={{
-                  fontSize: isXSmall ? '0.75rem' : isMobile ? '0.9rem' : '1rem',
-                  lineHeight: isXSmall ? 1.3 : isMobile ? 1.5 : 1.7,
+                  fontSize: isVerySmall
+                    ? '0.7rem'
+                    : isXSmall
+                      ? '0.75rem'
+                      : isMobile
+                        ? '0.9rem'
+                        : '1rem',
+                  lineHeight: isVerySmall ? 1.2 : isXSmall ? 1.3 : isMobile ? 1.5 : 1.7,
+                  mb: isVerySmall ? 0.5 : undefined,
                 }}
               >
-                {profileData.aboutMe}
+                {basicInfo.aboutMe}
               </Typography>
             )}
           </Paper>
@@ -482,4 +547,4 @@ function BasicInfo() {
   );
 }
 
-export default BasicInfo;
+export default BasicInfoHr;

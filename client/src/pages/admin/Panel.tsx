@@ -36,6 +36,7 @@ import {
   Tabs,
   TextField,
   Typography,
+  useMediaQuery,
   useTheme,
 } from '@mui/material';
 import SystemInfo from './system/SystemInfo';
@@ -67,6 +68,8 @@ interface NotificationState {
 
 const Panel = () => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const [activeTab, setActiveTab] = useState<TabValue>('dashboard');
   const [dialogOpen, setDialogOpen] = useState<DialogType>(null);
   const [formData, setFormData] = useState<UserFormData>({
@@ -218,15 +221,63 @@ const Panel = () => {
   return (
     <Container maxWidth="xl" sx={{ mt: 3, mb: 4 }}>
       <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: { xs: 0, sm: 1 } }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+        <Typography
+          variant={isMobile ? 'h5' : 'h4'}
+          component="h1"
+          gutterBottom
+          sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}
+        >
           Панель администратора
         </Typography>
 
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={activeTab} onChange={handleTabChange} aria-label="Разделы администрирования">
-            <Tab label="Дашборд" value="dashboard" icon={<DashboardIcon />} iconPosition="start" />
-            <Tab label="Пользователи" value="users" icon={<GroupIcon />} iconPosition="start" />
-            <Tab label="Система" value="system" icon={<SettingsIcon />} iconPosition="start" />
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            aria-label="Разделы администрирования"
+            variant={isMobile ? 'scrollable' : 'standard'}
+            scrollButtons={isMobile ? 'auto' : false}
+            allowScrollButtonsMobile
+            sx={{
+              '& .MuiTab-root': {
+                minWidth: { xs: 100, sm: 120 },
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                fontWeight: 500,
+                textTransform: 'none',
+                px: { xs: 1, sm: 2 },
+                py: { xs: 1, sm: 1.5 },
+                '&.Mui-selected': {
+                  fontWeight: 600,
+                },
+                '& .MuiTab-iconWrapper': {
+                  fontSize: { xs: '1.2rem', sm: '1.5rem' },
+                  mr: { xs: 0.5, sm: 1 },
+                },
+              },
+              '& .MuiTabs-indicator': {
+                height: 3,
+                borderRadius: '3px 3px 0 0',
+              },
+            }}
+          >
+            <Tab
+              label={isMobile ? 'Дашборд' : 'Дашборд'}
+              value="dashboard"
+              icon={<DashboardIcon />}
+              iconPosition="start"
+            />
+            <Tab
+              label={isMobile ? 'Пользователи' : 'Пользователи'}
+              value="users"
+              icon={<GroupIcon />}
+              iconPosition="start"
+            />
+            <Tab
+              label={isMobile ? 'Система' : 'Система'}
+              value="system"
+              icon={<SettingsIcon />}
+              iconPosition="start"
+            />
           </Tabs>
         </Box>
 

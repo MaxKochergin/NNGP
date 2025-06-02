@@ -1,14 +1,32 @@
-import { Person as PersonIcon } from '@mui/icons-material';
-import { Avatar, Box, Card, CardContent, Chip, Stack, Typography, useTheme } from '@mui/material';
-import { Candidate } from './CandidatesList';
+import { Delete as DeleteIcon, Person as PersonIcon } from '@mui/icons-material';
+import {
+  Avatar,
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  IconButton,
+  Stack,
+  Typography,
+  useTheme,
+} from '@mui/material';
+import { CandidateBasicInfo } from '../../../features/candidates/candidatesSlice';
 
 interface CandidateCardProps {
-  candidate: Candidate;
+  candidate: CandidateBasicInfo;
   onClick: () => void;
+  onDelete?: (candidateId: string) => void;
 }
 
-const CandidateCard = ({ candidate, onClick }: CandidateCardProps) => {
+const CandidateCard = ({ candidate, onClick, onDelete }: CandidateCardProps) => {
   const theme = useTheme();
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Предотвращаем срабатывание onClick карточки
+    if (onDelete) {
+      onDelete(candidate.id);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -44,6 +62,15 @@ const CandidateCard = ({ candidate, onClick }: CandidateCardProps) => {
     }
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <Card
       sx={{
@@ -61,7 +88,29 @@ const CandidateCard = ({ candidate, onClick }: CandidateCardProps) => {
       }}
       onClick={onClick}
     >
-      <CardContent>
+      {/* Кнопка удаления */}
+      {onDelete && (
+        <IconButton
+          size="small"
+          onClick={handleDeleteClick}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            bgcolor: 'background.paper',
+            boxShadow: 1,
+            '&:hover': {
+              bgcolor: 'error.light',
+              color: 'error.contrastText',
+            },
+            zIndex: 1,
+          }}
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      )}
+
+      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <Avatar
             src={candidate.avatar || undefined}
@@ -70,39 +119,92 @@ const CandidateCard = ({ candidate, onClick }: CandidateCardProps) => {
               height: 56,
               mr: 2,
               bgcolor: theme.palette.primary.main,
+              fontSize: '1.2rem',
+              fontWeight: 'bold',
             }}
           >
-            {!candidate.avatar && <PersonIcon />}
+            {!candidate.avatar && getInitials(candidate.name)}
           </Avatar>
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6" component="div" sx={{ fontSize: '1rem', fontWeight: 'bold' }}>
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                lineHeight: 1.2,
+                mb: 0.5,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+              }}
+            >
               {candidate.name}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                fontSize: '0.875rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+              }}
+            >
               {candidate.position}
             </Typography>
           </Box>
         </Box>
 
-        <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: 'wrap', gap: 0.5 }}>
+        <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}>
           <Chip
             label={candidate.status}
             color={getStatusColor(candidate.status)}
             size="small"
-            sx={{ height: 24 }}
+            sx={{ height: 24, fontSize: '0.75rem' }}
           />
           <Chip
             label={`Опыт: ${candidate.experience}`}
             variant="outlined"
             size="small"
-            sx={{ height: 24 }}
+            sx={{ height: 24, fontSize: '0.75rem' }}
           />
         </Stack>
+
+        {/* Дополнительная информация */}
+        {(candidate.location || candidate.salary) && (
+          <Box sx={{ mb: 2 }}>
+            {candidate.location && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', fontSize: '0.75rem' }}
+              >
+                📍 {candidate.location}
+              </Typography>
+            )}
+            {candidate.salary && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', fontSize: '0.75rem' }}
+              >
+                💰 {candidate.salary}
+              </Typography>
+            )}
+          </Box>
+        )}
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.75rem' }}>
           Навыки:
         </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2, minHeight: 52 }}>
+        <Box
+          sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2, minHeight: 52, flexGrow: 1 }}
+        >
           {candidate.skills.slice(0, 3).map((skill, index) => (
             <Chip
               key={index}
@@ -116,7 +218,7 @@ const CandidateCard = ({ candidate, onClick }: CandidateCardProps) => {
             <Chip
               label={`+${candidate.skills.length - 3}`}
               size="small"
-              sx={{ fontSize: '0.7rem', height: 24 }}
+              sx={{ fontSize: '0.7rem', height: 24, bgcolor: 'action.hover' }}
             />
           )}
         </Box>
@@ -131,6 +233,7 @@ const CandidateCard = ({ candidate, onClick }: CandidateCardProps) => {
             borderTop: '1px solid',
             borderColor: 'divider',
             pt: 1,
+            mt: 'auto',
           }}
         >
           Активность: {formatDate(candidate.lastActivity)}

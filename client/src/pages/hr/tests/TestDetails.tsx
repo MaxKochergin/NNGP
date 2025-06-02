@@ -6,6 +6,9 @@ import {
   Edit as EditIcon,
   PeopleAlt as PeopleIcon,
   Person as PersonIcon,
+  Quiz as QuizIcon,
+  Schedule as ScheduleIcon,
+  Star as StarIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -29,7 +32,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { mockTests, Test, TestQuestion } from '../../../types/test';
+import { useTests } from '../../../features/tests/testsHooks';
+import { Test } from '../../../types/test';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -65,36 +69,29 @@ const TestDetails = () => {
   const navigate = useNavigate();
   const theme = useTheme();
 
-  const [test, setTest] = useState<Test | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // Redux hooks
+  const {
+    selectedTest: test,
+    isLoadingDetails: loading,
+    detailsError: error,
+    loadTest,
+    deleteTest,
+    clearSelectedTest,
+  } = useTests();
+
   const [tabValue, setTabValue] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
-    // Имитация запроса к API
-    const fetchTest = () => {
-      setLoading(true);
-      try {
-        // В реальном приложении здесь был бы запрос к API
-        const foundTest = mockTests.find(t => t.id === id);
+    if (id) {
+      loadTest(id);
+    }
 
-        if (foundTest) {
-          setTest(foundTest);
-          setError('');
-        } else {
-          setError('Тест не найден');
-        }
-      } catch (err) {
-        setError('Ошибка при загрузке теста');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+    // Очищаем выбранный тест при размонтировании
+    return () => {
+      clearSelectedTest();
     };
-
-    fetchTest();
-  }, [id]);
+  }, [id, loadTest, clearSelectedTest]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -112,11 +109,17 @@ const TestDetails = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
-    // Здесь будет логика удаления теста
-    // await api.delete(`/tests/${id}`);
-    setDeleteDialogOpen(false);
-    navigate('/app/hr/tests');
+  const handleDeleteConfirm = async () => {
+    if (id) {
+      try {
+        await deleteTest(id);
+        setDeleteDialogOpen(false);
+        navigate('/app/hr/tests');
+      } catch (error) {
+        console.error('Ошибка при удалении теста:', error);
+        // Можно добавить уведомление об ошибке
+      }
+    }
   };
 
   const handleDeleteCancel = () => {

@@ -11,6 +11,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Container,
   Divider,
   FormControl,
@@ -28,8 +29,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTests } from '../../../features/tests/testsHooks';
 import {
-  mockTests,
   Test,
   TestDifficulty,
   TestQuestion,
@@ -275,6 +276,19 @@ const TestForm = () => {
   const theme = useTheme();
   const isEditMode = !!id;
 
+  // Redux hooks
+  const {
+    selectedTest,
+    isLoadingDetails,
+    isCreating,
+    isUpdating,
+    detailsError,
+    loadTest,
+    createTest,
+    updateTest,
+    clearSelectedTest,
+  } = useTests();
+
   // Состояние формы
   const [formData, setFormData] = useState<Partial<Test>>({
     title: '',
@@ -292,37 +306,48 @@ const TestForm = () => {
   });
 
   const [tabValue, setTabValue] = useState(0);
-  const [loading, setLoading] = useState(isEditMode);
-  const [error, setError] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Функция для проверки валидности формы в реальном времени (без установки ошибок)
+  const isFormValid = (): boolean => {
+    if (!formData.title?.trim()) return false;
+    if (!formData.description?.trim()) return false;
+    if (!formData.questions || formData.questions.length === 0) return false;
+
+    // Проверяем каждый вопрос
+    for (const question of formData.questions) {
+      if (!question.text?.trim()) return false;
+
+      if (question.type === 'single' || question.type === 'multiple') {
+        if (!question.options || question.options.length < 2) return false;
+
+        if (question.type === 'single' && !question.options.some(o => o.isCorrect)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
 
   // Загрузка данных для редактирования
   useEffect(() => {
-    if (isEditMode) {
-      // Имитация загрузки теста с сервера
-      const fetchTest = () => {
-        setLoading(true);
-        try {
-          // В реальном приложении здесь был бы API запрос
-          const test = mockTests.find(t => t.id === id);
-
-          if (test) {
-            setFormData(test);
-            setError('');
-          } else {
-            setError('Тест не найден');
-          }
-        } catch (err) {
-          setError('Ошибка при загрузке теста');
-          console.error(err);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchTest();
+    if (isEditMode && id) {
+      loadTest(id);
     }
-  }, [id, isEditMode]);
+
+    // Очищаем выбранный тест при размонтировании
+    return () => {
+      clearSelectedTest();
+    };
+  }, [id, isEditMode, loadTest, clearSelectedTest]);
+
+  // Обновляем форму при загрузке теста
+  useEffect(() => {
+    if (selectedTest && isEditMode) {
+      setFormData(selectedTest);
+    }
+  }, [selectedTest, isEditMode]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -388,14 +413,15 @@ const TestForm = () => {
     }));
   };
 
+  // Функция для проверки валидности формы без установки ошибок
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!formData.title) {
+    if (!formData.title?.trim()) {
       errors.title = 'Название теста обязательно';
     }
 
-    if (!formData.description) {
+    if (!formData.description?.trim()) {
       errors.description = 'Описание теста обязательно';
     }
 
@@ -403,7 +429,7 @@ const TestForm = () => {
       errors.questions = 'Добавьте хотя бы один вопрос';
     } else {
       formData.questions.forEach((question, index) => {
-        if (!question.text) {
+        if (!question.text?.trim()) {
           errors[`question_${index}`] = `Вопрос ${index + 1}: добавьте текст вопроса`;
         }
 
@@ -436,19 +462,19 @@ const TestForm = () => {
     }
 
     try {
-      // Здесь будет отправка данных на сервер
-      console.log('Отправка данных:', formData);
-
-      // В реальном приложении:
-      // const response = await api.post('/tests', formData);
-      // или
-      // const response = await api.put(`/tests/${id}`, formData);
+      if (isEditMode && formData.id) {
+        // Обновляем существующий тест
+        await updateTest(formData as Test);
+      } else {
+        // Создаем новый тест
+        await createTest(formData as Omit<Test, 'id' | 'createdAt' | 'updatedAt'>);
+      }
 
       // После успешного сохранения переходим к списку тестов
       navigate('/app/hr/tests');
     } catch (error) {
       console.error('Ошибка при сохранении теста:', error);
-      setError('Ошибка при сохранении теста');
+      setFormErrors({ submit: 'Ошибка при сохранении теста' });
     }
   };
 
@@ -456,7 +482,7 @@ const TestForm = () => {
     navigate('/app/hr/tests');
   };
 
-  if (loading) {
+  if (isLoadingDetails) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Typography>Загрузка...</Typography>
@@ -464,10 +490,10 @@ const TestForm = () => {
     );
   }
 
-  if (error) {
+  if (detailsError) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Typography color="error">{error}</Typography>
+        <Typography color="error">{detailsError}</Typography>
         <Button startIcon={<ArrowBackIcon />} onClick={handleCancel} sx={{ mt: 2 }}>
           Вернуться к списку тестов
         </Button>
@@ -489,10 +515,11 @@ const TestForm = () => {
             <Button
               variant="contained"
               color="primary"
-              startIcon={<SaveIcon />}
+              startIcon={isCreating || isUpdating ? <CircularProgress size={16} /> : <SaveIcon />}
               onClick={handleSubmit}
+              disabled={!isFormValid() || isCreating || isUpdating}
             >
-              Сохранить тест
+              {isCreating ? 'Создание...' : isUpdating ? 'Сохранение...' : 'Сохранить тест'}
             </Button>
           </Box>
         </Box>
@@ -713,6 +740,7 @@ const TestForm = () => {
             color="primary"
             startIcon={<SaveIcon />}
             onClick={handleSubmit}
+            disabled={!isFormValid() || isCreating || isUpdating}
           >
             {isEditMode ? 'Сохранить изменения' : 'Создать тест'}
           </Button>

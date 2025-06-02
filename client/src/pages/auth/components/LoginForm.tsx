@@ -9,7 +9,7 @@ interface LoginFormProps {
   onSubmit: SubmitHandler<LoginFormInputs>;
   errors: FieldErrors<LoginFormInputs>;
   isLoading: boolean;
-  error: any;
+  error: string | null;
 }
 
 export const LoginForm = ({
@@ -24,7 +24,7 @@ export const LoginForm = ({
     <Box>
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {(error as any)?.data?.message || 'Произошла ошибка при входе в систему'}
+          {error}
         </Alert>
       )}
 

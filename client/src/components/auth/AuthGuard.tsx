@@ -9,19 +9,24 @@ interface AuthGuardProps {
 }
 
 // Функция для определения базового маршрута по роли пользователя
-const getDefaultRouteByRole = (roles: string[] | undefined): string => {
-  if (!roles || roles.length === 0) return '/';
-
-  if (roles.includes('admin')) return '/app/admin/panel';
-  if (roles.includes('hr')) return '/app/hr/profile';
-  if (roles.includes('employee')) return '/app/employee/profile';
-  if (roles.includes('candidate')) return '/app/candidate/profile';
-
-  return '/';
+const getDefaultRouteByRole = (role: string): string => {
+  switch (role) {
+    case 'admin':
+      return '/app/admin/panel';
+    case 'hr':
+      return '/app/hr/profile';
+    case 'employer':
+      return '/app/employer/profile';
+    case 'candidate':
+      return '/app/candidate/profile';
+    default:
+      return '/';
+  }
 };
 
 export const AuthGuard = ({ children, requiredRoles = [] }: AuthGuardProps) => {
-  const { isAuthenticated, user } = useAppSelector(state => state.auth);
+  // Используем mock auth вместо обычного auth
+  const { isAuthenticated, user } = useAppSelector(state => state.mockAuth);
   const location = useLocation();
 
   // Если пользователь не аутентифицирован, перенаправляем на страницу входа
@@ -29,9 +34,9 @@ export const AuthGuard = ({ children, requiredRoles = [] }: AuthGuardProps) => {
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
-  // Если есть требуемые роли и у пользователя нет ни одной из них, перенаправляем на маршрут по роли
-  if (requiredRoles.length > 0 && !requiredRoles.some(role => user?.roles?.includes(role))) {
-    const defaultRoute = getDefaultRouteByRole(user?.roles);
+  // Если есть требуемые роли и у пользователя нет нужной роли, перенаправляем на маршрут по роли
+  if (requiredRoles.length > 0 && user && !requiredRoles.includes(user.role)) {
+    const defaultRoute = getDefaultRouteByRole(user.role);
     return <Navigate to={defaultRoute} replace />;
   }
 

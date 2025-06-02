@@ -13,6 +13,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Container,
   Divider,
   FormControl,
@@ -33,68 +34,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-
-// Тестовые данные для редактирования сотрудника
-const mockEmployeeDetails = {
-  id: '1',
-  name: 'Смирнов Дмитрий Константинович',
-  position: 'Ведущий инженер-конструктор',
-  department: 'Конструкторский отдел',
-  experience: '5 лет',
-  status: 'Работает',
-  hireDate: '2025-04-15',
-  skills: [
-    'AutoCAD',
-    'Revit',
-    'ЛИРА-САПР',
-    'Железобетонные конструкции',
-    'Нормативная документация',
-  ],
-  email: 'smirnov@example.com',
-  phone: '+7 (999) 123-45-67',
-  salary: '180000',
-  location: 'Москва',
-  birthDate: '1990-05-15',
-  education: [
-    {
-      id: '1',
-      degree: 'Магистр',
-      specialty: 'Промышленное и гражданское строительство',
-      university: 'Московский государственный строительный университет',
-      year: '2015',
-      description: 'Специализация: проектирование железобетонных конструкций. Диплом с отличием.',
-    },
-  ],
-  workExperience: [
-    {
-      id: '1',
-      company: 'ООО "СтройПроект"',
-      position: 'Инженер-конструктор 1 категории',
-      period: '2020-2025',
-      description:
-        'Проектирование железобетонных конструкций многоквартирных жилых домов. Расчет конструкций в ЛИРА-САПР. Разработка рабочей документации.',
-    },
-  ],
-};
-
-// Пустые данные для нового сотрудника
-const emptyEmployee = {
-  id: '',
-  name: '',
-  position: '',
-  department: '',
-  experience: '',
-  status: 'Работает',
-  hireDate: new Date().toISOString().split('T')[0],
-  skills: [],
-  email: '',
-  phone: '',
-  salary: '',
-  location: '',
-  birthDate: '',
-  education: [],
-  workExperience: [],
-};
+import { useEmployees } from '../../../features/employees/employeesHooks';
+import { EmployeeDetailed } from '../../../features/employees/employeesSlice';
 
 // Доступные статусы сотрудников
 const statuses = ['Работает', 'В отпуске', 'На больничном', 'Уволен'];
@@ -161,23 +102,48 @@ interface EmployeeFormData {
   workExperience: WorkExperience[];
 }
 
-// Предзаполненные данные для формы (для редактирования)
-const defaultValues = {
-  name: 'Смирнов Дмитрий Константинович',
-  position: 'Ведущий инженер-конструктор',
-  // ... existing code ...
-};
-
 const EmployeeForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isNewEmployee = !id || id === 'new';
 
-  const [employee, setEmployee] = useState<EmployeeFormData>(
-    isNewEmployee ? emptyEmployee : mockEmployeeDetails
-  );
-  const [loading, setLoading] = useState(!isNewEmployee);
-  const [saving, setSaving] = useState(false);
+  // Redux hooks
+  const {
+    selectedEmployee,
+    isLoadingDetails,
+    isCreating,
+    isUpdating,
+    detailsError,
+    loadEmployee,
+    clearSelectedEmployee,
+    createEmployeeWithDetails,
+    updateEmployeeWithDetails,
+  } = useEmployees();
+
+  const [employee, setEmployee] = useState<EmployeeDetailed>({
+    id: '',
+    name: '',
+    position: '',
+    department: '',
+    experience: '',
+    status: 'Работает',
+    hireDate: new Date().toISOString().split('T')[0],
+    skills: [],
+    email: '',
+    phone: '',
+    salary: '',
+    location: '',
+    lastActivity: new Date().toISOString().split('T')[0],
+    birthDate: '',
+    education: [],
+    workExperience: [],
+    certifications: [],
+    projects: [],
+    evaluations: [],
+    notes: [],
+    training: [],
+  });
+
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [newSkill, setNewSkill] = useState('');
@@ -201,17 +167,21 @@ const EmployeeForm = () => {
   const [showEducationForm, setShowEducationForm] = useState(false);
   const [showWorkExperienceForm, setShowWorkExperienceForm] = useState(false);
 
-  // Загрузка данных сотрудника при редактировании
+  // Загружаем данные сотрудника при редактировании
   useEffect(() => {
-    if (!isNewEmployee) {
-      setLoading(true);
-      // Имитация запроса к API
-      setTimeout(() => {
-        setEmployee(mockEmployeeDetails);
-        setLoading(false);
-      }, 1000);
+    if (!isNewEmployee && id) {
+      loadEmployee(id);
+    } else {
+      clearSelectedEmployee();
     }
-  }, [id, isNewEmployee]);
+  }, [id, isNewEmployee, loadEmployee, clearSelectedEmployee]);
+
+  // Обновляем локальное состояние при загрузке данных из Redux
+  useEffect(() => {
+    if (selectedEmployee && !isNewEmployee) {
+      setEmployee(selectedEmployee);
+    }
+  }, [selectedEmployee, isNewEmployee]);
 
   // Обработчики изменения полей формы
   const handleChange =
@@ -334,29 +304,47 @@ const EmployeeForm = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setError(null);
 
     // Валидация обязательных полей
     if (!employee.name || !employee.position || !employee.department) {
       setError('Пожалуйста, заполните все обязательные поля');
-      setSaving(false);
       return;
     }
 
-    // Имитация отправки данных на сервер
-    setTimeout(() => {
-      console.log('Сохраняемые данные:', employee);
-      setSaving(false);
-      setSuccess(true);
+    try {
+      if (isNewEmployee) {
+        // Создаем нового сотрудника
+        const newEmployeeData = {
+          ...employee,
+          lastActivity: new Date().toISOString().split('T')[0],
+        };
+        await createEmployeeWithDetails(newEmployeeData);
+        setSuccess(true);
 
-      // Перенаправление на страницу сотрудника после успешного сохранения
-      setTimeout(() => {
-        navigate(`/app/hr/employees/${employee.id || 'new'}`);
-      }, 1500);
-    }, 1500);
+        // Перенаправляем на список сотрудников
+        setTimeout(() => {
+          navigate('/app/hr/employees');
+        }, 1500);
+      } else {
+        // Обновляем существующего сотрудника
+        const updatedEmployee = {
+          ...employee,
+          lastActivity: new Date().toISOString().split('T')[0],
+        };
+        await updateEmployeeWithDetails(updatedEmployee);
+        setSuccess(true);
+
+        // Перенаправляем на страницу сотрудника
+        setTimeout(() => {
+          navigate(`/app/hr/employees/${employee.id}`);
+        }, 1500);
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Ошибка при сохранении данных');
+    }
   };
 
   const handleCancel = () => {
@@ -375,7 +363,7 @@ const EmployeeForm = () => {
           </Typography>
         </Box>
 
-        {loading ? (
+        {isLoadingDetails ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <Typography>Загрузка данных...</Typography>
           </Box>
@@ -799,10 +787,12 @@ const EmployeeForm = () => {
                 <Button
                   type="submit"
                   variant="contained"
-                  startIcon={<SaveIcon />}
-                  disabled={saving}
+                  startIcon={
+                    isCreating || isUpdating ? <CircularProgress size={16} /> : <SaveIcon />
+                  }
+                  disabled={isCreating || isUpdating}
                 >
-                  {saving ? 'Сохранение...' : 'Сохранить'}
+                  {isCreating || isUpdating ? 'Сохранение...' : 'Сохранить'}
                 </Button>
               </Grid>
             </Grid>
@@ -810,9 +800,9 @@ const EmployeeForm = () => {
         )}
 
         {/* Сообщения об ошибках и успешном сохранении */}
-        {error && (
+        {(error || detailsError) && (
           <Alert severity="error" sx={{ mt: 2 }}>
-            {error}
+            {error || detailsError}
           </Alert>
         )}
 

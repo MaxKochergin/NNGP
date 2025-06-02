@@ -1,450 +1,544 @@
-import { useEffect, useState } from 'react';
-import { Add, Cancel, Delete, Edit, Save, School } from '@mui/icons-material';
+import { useState } from 'react';
+import { Add, DateRange, Delete, Edit, Grade, School } from '@mui/icons-material';
 import {
+  Alert,
   Box,
   Button,
   Card,
   CardContent,
+  Checkbox,
   Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
-  FormControl,
+  FormControlLabel,
   IconButton,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
+  Snackbar,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { ru } from 'date-fns/locale/ru';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import {
+  addEducation,
+  deleteEducation,
+  Education,
+  selectEducation,
+  updateEducation,
+} from '../../features/hr/hrProfileSlice';
 
-// Типы данных для образования
-interface Education {
-  id: string;
-  institution: string;
-  degree: string;
-  fieldOfStudy: string;
-  description?: string;
-  startDate: Date;
-  endDate: Date | null;
-  isCurrentlyStudying: boolean;
-}
+function HrProfileEducation() {
+  const dispatch = useAppDispatch();
+  const education = useAppSelector(selectEducation);
 
-// Начальное пустое значение для новой записи
-const emptyEducation: Omit<Education, 'id'> = {
-  institution: '',
-  degree: '',
-  fieldOfStudy: '',
-  description: '',
-  startDate: new Date(),
-  endDate: null,
-  isCurrentlyStudying: false,
-};
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formData, setFormData] = useState<Omit<Education, 'id'>>({
+    institution: '',
+    degree: '',
+    fieldOfStudy: '',
+    startDate: '',
+    endDate: '',
+    isCurrent: false,
+    description: '',
+    gpa: '',
+  });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success' as 'success' | 'error',
+  });
 
-// Доступные степени образования
-const availableDegrees = [
-  'Среднее общее',
-  'Среднее профессиональное',
-  'Бакалавр',
-  'Специалист',
-  'Магистр',
-  'Аспирантура',
-  'Кандидат наук',
-  'Доктор наук',
-  'Профессиональная переподготовка',
-  'Повышение квалификации',
-];
+  const theme = useTheme();
+  const isVerySmall = useMediaQuery('(max-width:375px)');
+  const isXSmall = useMediaQuery('(max-width:320px)');
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-function EmployerProfileEducation() {
-  // Состояния для диалоговых окон
-  const [openAddDialog, setOpenAddDialog] = useState(false);
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-
-  // Состояние для редактируемого образования
-  const [currentEducation, setCurrentEducation] = useState<Omit<Education, 'id'>>(emptyEducation);
-  const [currentEducationId, setCurrentEducationId] = useState<string | null>(null);
-
-  // Временные данные об образовании, в реальном приложении будут загружаться с сервера
-  const [educations, setEducations] = useState<Education[]>([
-    {
-      id: '1',
-      institution: 'Московский государственный университет им. М.В. Ломоносова',
-      degree: 'Магистр',
-      fieldOfStudy: 'Управление персоналом',
-      description:
-        'Специализация: HR-менеджмент в организациях инженерно-технического профиля. Углубленное изучение методов оценки профессиональных компетенций, системы мотивации технических специалистов, корпоративного обучения. Магистерская диссертация: "Специфика подбора и адаптации инженерно-технического персонала в строительных компаниях". Оценка: отлично.',
-      startDate: new Date('2015-09-01'),
-      endDate: new Date('2017-06-30'),
-      isCurrentlyStudying: false,
-    },
-    {
-      id: '2',
-      institution: 'Российский экономический университет им. Г.В. Плеханова',
-      degree: 'Бакалавр',
-      fieldOfStudy: 'Менеджмент',
-      description:
-        'Профиль: "Управление человеческими ресурсами". Основные дисциплины: организационное поведение, управление персоналом, трудовое право, психология управления, методы принятия управленческих решений. Бакалаврская работа: "Разработка системы оценки эффективности HR-подразделения в современной компании". Средний балл: 4.8.',
-      startDate: new Date('2011-09-01'),
-      endDate: new Date('2015-06-30'),
-      isCurrentlyStudying: false,
-    },
-    {
-      id: '3',
-      institution: 'Корпоративный университет HeadHunter',
-      degree: 'Повышение квалификации',
-      fieldOfStudy: 'Оценка технических специалистов',
-      description:
-        'Программа повышения квалификации (80 часов) по специфике оценки профессиональных компетенций инженерно-технических работников. Изучение методик проведения технических интервью, оценки hard skills в области строительного проектирования, специфики работы с узкопрофильными специалистами. Итоговая аттестация с отличием.',
-      startDate: new Date('2022-02-10'),
-      endDate: new Date('2022-03-30'),
-      isCurrentlyStudying: false,
-    },
-  ]);
-
-  // Сортировка образования по дате начала (самое свежее сверху)
-  useEffect(() => {
-    setEducations(prevEducations =>
-      [...prevEducations].sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
-    );
-  }, []);
-
-  // Функция форматирования даты
-  const formatDate = (date: Date | null): string => {
-    if (!date) return 'по настоящее время';
-    return new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric' }).format(date);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData(prev => ({
+        ...prev,
+        [name]: checked,
+        ...(name === 'isCurrent' && checked ? { endDate: '' } : {}),
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
-  // Функция для расчета продолжительности обучения
-  const getDuration = (startDate: Date, endDate: Date | null): string => {
-    const end = endDate || new Date();
-    const diffYears = end.getFullYear() - startDate.getFullYear();
-    const diffMonths = end.getMonth() - startDate.getMonth();
-
-    let years = diffYears;
-    let months = diffMonths;
-
-    if (diffMonths < 0) {
-      years -= 1;
-      months += 12;
+  const handleOpenDialog = (edu?: Education) => {
+    if (edu) {
+      setFormData({
+        institution: edu.institution,
+        degree: edu.degree,
+        fieldOfStudy: edu.fieldOfStudy,
+        startDate: edu.startDate,
+        endDate: edu.endDate || '',
+        isCurrent: edu.isCurrent,
+        description: edu.description || '',
+        gpa: edu.gpa || '',
+      });
+      setEditingId(edu.id);
+    } else {
+      setFormData({
+        institution: '',
+        degree: '',
+        fieldOfStudy: '',
+        startDate: '',
+        endDate: '',
+        isCurrent: false,
+        description: '',
+        gpa: '',
+      });
+      setEditingId(null);
     }
-
-    let result = '';
-    if (years > 0) {
-      result += `${years} ${years === 1 ? 'год' : years < 5 ? 'года' : 'лет'}`;
-    }
-    if (months > 0) {
-      if (result) result += ' ';
-      result += `${months} ${months === 1 ? 'месяц' : months < 5 ? 'месяца' : 'месяцев'}`;
-    }
-    if (!result) return 'Менее месяца';
-    return result;
-  };
-
-  // Обработчики для диалога добавления/редактирования
-  const handleOpenAddDialog = () => {
-    setCurrentEducation(emptyEducation);
-    setCurrentEducationId(null);
-    setOpenAddDialog(true);
-  };
-
-  const handleOpenEditDialog = (edu: Education) => {
-    setCurrentEducation({
-      institution: edu.institution,
-      degree: edu.degree,
-      fieldOfStudy: edu.fieldOfStudy,
-      description: edu.description || '',
-      startDate: edu.startDate,
-      endDate: edu.endDate,
-      isCurrentlyStudying: edu.isCurrentlyStudying,
-    });
-    setCurrentEducationId(edu.id);
-    setOpenEditDialog(true);
+    setDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
-    setOpenAddDialog(false);
-    setOpenEditDialog(false);
-    setCurrentEducation(emptyEducation);
-    setCurrentEducationId(null);
+    setDialogOpen(false);
+    setEditingId(null);
   };
 
-  // Обработчики для диалога удаления
-  const handleOpenDeleteDialog = (id: string) => {
-    setCurrentEducationId(id);
-    setOpenDeleteDialog(true);
-  };
-
-  const handleCloseDeleteDialog = () => {
-    setOpenDeleteDialog(false);
-    setCurrentEducationId(null);
-  };
-
-  // Обработчики изменения полей формы
-  const handleFieldChange = (field: keyof typeof currentEducation, value: any) => {
-    setCurrentEducation(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-
-    // Если пользователь отметил, что сейчас учится, установить endDate в null
-    if (field === 'isCurrentlyStudying' && value === true) {
-      setCurrentEducation(prev => ({
-        ...prev,
-        endDate: null,
-      }));
+  const handleSave = () => {
+    try {
+      if (editingId) {
+        dispatch(updateEducation({ ...formData, id: editingId }));
+        setSnackbar({
+          open: true,
+          message: 'Образование успешно обновлено',
+          severity: 'success',
+        });
+      } else {
+        dispatch(addEducation(formData));
+        setSnackbar({
+          open: true,
+          message: 'Образование успешно добавлено',
+          severity: 'success',
+        });
+      }
+      handleCloseDialog();
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: 'Ошибка при сохранении',
+        severity: 'error',
+      });
     }
   };
 
-  // Обработчики сохранения форм
-  const handleSaveEducation = () => {
-    // Валидация формы
-    if (
-      !currentEducation.institution ||
-      !currentEducation.degree ||
-      !currentEducation.fieldOfStudy
-    ) {
-      alert('Пожалуйста, заполните обязательные поля');
-      return;
+  const handleDelete = (id: string) => {
+    if (window.confirm('Вы уверены, что хотите удалить эту запись об образовании?')) {
+      dispatch(deleteEducation(id));
+      setSnackbar({
+        open: true,
+        message: 'Образование удалено',
+        severity: 'success',
+      });
     }
-
-    if (openAddDialog) {
-      // Добавление нового образования
-      const newId = Date.now().toString(); // Простая генерация ID
-      setEducations(prev => [
-        ...prev,
-        {
-          id: newId,
-          ...currentEducation,
-        },
-      ]);
-    } else if (openEditDialog && currentEducationId) {
-      // Редактирование существующего образования
-      setEducations(prev =>
-        prev.map(edu => (edu.id === currentEducationId ? { id: edu.id, ...currentEducation } : edu))
-      );
-    }
-
-    handleCloseDialog();
   };
 
-  // Обработчик удаления образования
-  const handleDeleteEducation = () => {
-    if (currentEducationId) {
-      setEducations(prev => prev.filter(edu => edu.id !== currentEducationId));
-      handleCloseDeleteDialog();
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const [year, month] = dateString.split('-');
+    const monthNames = [
+      'янв',
+      'фев',
+      'мар',
+      'апр',
+      'май',
+      'июн',
+      'июл',
+      'авг',
+      'сен',
+      'окт',
+      'ноя',
+      'дек',
+    ];
+    return `${monthNames[parseInt(month) - 1]} ${year}`;
+  };
+
+  const calculateDuration = (startDate: string, endDate?: string, isCurrent?: boolean) => {
+    const start = new Date(startDate);
+    const end = isCurrent ? new Date() : new Date(endDate || '');
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30));
+
+    const years = Math.floor(diffMonths / 12);
+    const months = diffMonths % 12;
+
+    if (years > 0 && months > 0) {
+      return `${years} г. ${months} мес.`;
+    } else if (years > 0) {
+      return `${years} г.`;
+    } else {
+      return `${months} мес.`;
     }
   };
 
   return (
-    <Box>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6">Образование</Typography>
-        <Button variant="contained" startIcon={<Add />} size="small" onClick={handleOpenAddDialog}>
-          Добавить образование
+    <Box sx={{ px: isVerySmall ? 0.5 : 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography
+          variant={isVerySmall ? 'h6' : isMobile ? 'h5' : 'h4'}
+          sx={{
+            fontSize: isVerySmall ? '1.1rem' : undefined,
+            fontWeight: 'medium',
+          }}
+        >
+          Образование
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          onClick={() => handleOpenDialog()}
+          size={isVerySmall ? 'small' : 'medium'}
+          sx={{
+            fontSize: isVerySmall ? '0.75rem' : undefined,
+            px: isVerySmall ? 1.5 : undefined,
+          }}
+        >
+          Добавить
         </Button>
       </Box>
 
-      {educations.length === 0 ? (
+      {education.length === 0 ? (
         <Paper sx={{ p: 3, textAlign: 'center' }}>
-          <Typography color="textSecondary">
-            У вас пока нет добавленного образования. Нажмите "Добавить образование" чтобы начать.
+          <School sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            Образование не добавлено
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Добавьте информацию о своем образовании
+          </Typography>
+          <Button variant="outlined" startIcon={<Add />} onClick={() => handleOpenDialog()}>
+            Добавить образование
+          </Button>
         </Paper>
       ) : (
-        <Box>
-          {educations.map((edu, index) => (
-            <Card
-              key={edu.id}
-              sx={{
-                mb: 2,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                borderRadius: 2,
-              }}
-            >
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                  <Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <School color="primary" fontSize="small" />
-                      <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                        {edu.degree}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {education.map(edu => (
+            <Card key={edu.id} sx={{ position: 'relative' }}>
+              <CardContent sx={{ p: isVerySmall ? 2 : 3 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    mb: 2,
+                  }}
+                >
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant={isVerySmall ? 'subtitle1' : 'h6'}
+                      sx={{
+                        fontWeight: 'bold',
+                        fontSize: isVerySmall ? '1rem' : undefined,
+                        mb: 0.5,
+                      }}
+                    >
+                      {edu.degree} - {edu.fieldOfStudy}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <School
+                        sx={{
+                          fontSize: isVerySmall ? 16 : 20,
+                          color: 'text.secondary',
+                          mr: 1,
+                        }}
+                      />
+                      <Typography
+                        variant="subtitle1"
+                        color="primary"
+                        sx={{ fontSize: isVerySmall ? '0.85rem' : undefined }}
+                      >
+                        {edu.institution}
                       </Typography>
                     </Box>
-                    <Typography variant="subtitle1" color="primary">
-                      {edu.institution}
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 0.5 }}>
-                      {edu.fieldOfStudy}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      {formatDate(edu.startDate)} — {formatDate(edu.endDate)}
-                      {' · '}
-                      {getDuration(edu.startDate, edu.endDate)}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <DateRange
+                        sx={{
+                          fontSize: isVerySmall ? 16 : 20,
+                          color: 'text.secondary',
+                          mr: 1,
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ fontSize: isVerySmall ? '0.75rem' : undefined }}
+                      >
+                        {formatDate(edu.startDate)} —{' '}
+                        {edu.isCurrent ? 'настоящее время' : formatDate(edu.endDate || '')} (
+                        {calculateDuration(edu.startDate, edu.endDate, edu.isCurrent)})
+                      </Typography>
+                      {edu.isCurrent && (
+                        <Chip
+                          label="Обучаюсь"
+                          size="small"
+                          color="primary"
+                          sx={{
+                            ml: 1,
+                            fontSize: isVerySmall ? '0.65rem' : undefined,
+                            height: isVerySmall ? 20 : undefined,
+                          }}
+                        />
+                      )}
+                    </Box>
+                    {edu.gpa && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <Grade
+                          sx={{
+                            fontSize: isVerySmall ? 16 : 20,
+                            color: 'text.secondary',
+                            mr: 1,
+                          }}
+                        />
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontSize: isVerySmall ? '0.75rem' : undefined }}
+                        >
+                          Средний балл: {edu.gpa}
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
-                  <Box>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
                     <IconButton
-                      size="small"
-                      sx={{ mr: 1 }}
-                      onClick={() => handleOpenEditDialog(edu)}
+                      size={isVerySmall ? 'small' : 'medium'}
+                      onClick={() => handleOpenDialog(edu)}
+                      sx={{ color: 'primary.main' }}
                     >
-                      <Edit fontSize="small" />
+                      <Edit sx={{ fontSize: isVerySmall ? 16 : 20 }} />
                     </IconButton>
                     <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleOpenDeleteDialog(edu.id)}
+                      size={isVerySmall ? 'small' : 'medium'}
+                      onClick={() => handleDelete(edu.id)}
+                      sx={{ color: 'error.main' }}
                     >
-                      <Delete fontSize="small" />
+                      <Delete sx={{ fontSize: isVerySmall ? 16 : 20 }} />
                     </IconButton>
                   </Box>
                 </Box>
 
                 {edu.description && (
-                  <Typography variant="body2" paragraph>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: isVerySmall ? '0.75rem' : undefined,
+                      lineHeight: isVerySmall ? 1.3 : undefined,
+                    }}
+                  >
                     {edu.description}
                   </Typography>
                 )}
               </CardContent>
-
-              {index < educations.length - 1 && <Divider />}
             </Card>
           ))}
         </Box>
       )}
 
-      {/* Диалог добавления/редактирования образования */}
+      {/* Диалог добавления/редактирования */}
       <Dialog
-        open={openAddDialog || openEditDialog}
+        open={dialogOpen}
         onClose={handleCloseDialog}
-        fullWidth
         maxWidth="md"
+        fullWidth
+        fullScreen={isMobile}
       >
-        <DialogTitle>
-          {openAddDialog ? 'Добавить образование' : 'Редактировать образование'}
+        <DialogTitle sx={{ fontSize: isVerySmall ? '1.1rem' : undefined }}>
+          {editingId ? 'Редактировать образование' : 'Добавить образование'}
         </DialogTitle>
         <DialogContent>
-          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ru}>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: 1, mx: -1 }}>
-              <Box sx={{ width: '100%', px: 1, mb: 2 }}>
-                <TextField
-                  label="Учебное заведение"
-                  fullWidth
-                  required
-                  value={currentEducation.institution}
-                  onChange={e => handleFieldChange('institution', e.target.value)}
-                />
-              </Box>
-              <Box sx={{ width: { xs: '100%', md: '50%' }, px: 1, mb: 2 }}>
-                <FormControl fullWidth required>
-                  <InputLabel id="degree-select-label">Степень/Уровень образования</InputLabel>
-                  <Select
-                    labelId="degree-select-label"
-                    value={currentEducation.degree}
-                    label="Степень/Уровень образования"
-                    onChange={e => handleFieldChange('degree', e.target.value)}
-                  >
-                    {availableDegrees.map(degree => (
-                      <MenuItem key={degree} value={degree}>
-                        {degree}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-              <Box sx={{ width: { xs: '100%', md: '50%' }, px: 1, mb: 2 }}>
-                <TextField
-                  label="Специальность/Направление"
-                  fullWidth
-                  required
-                  value={currentEducation.fieldOfStudy}
-                  onChange={e => handleFieldChange('fieldOfStudy', e.target.value)}
-                />
-              </Box>
-              <Box sx={{ width: { xs: '100%', md: '50%' }, px: 1, mb: 2 }}>
-                <DatePicker
-                  label="Дата начала"
-                  value={currentEducation.startDate}
-                  onChange={(date: Date | null) => handleFieldChange('startDate', date)}
-                  sx={{ width: '100%' }}
-                />
-              </Box>
-              <Box sx={{ width: { xs: '100%', md: '50%' }, px: 1, mb: 2 }}>
-                <DatePicker
-                  label="Дата окончания"
-                  value={currentEducation.endDate}
-                  onChange={(date: Date | null) => handleFieldChange('endDate', date)}
-                  disabled={currentEducation.isCurrentlyStudying}
-                  sx={{ width: '100%' }}
-                />
-              </Box>
-              <Box sx={{ width: '100%', px: 1, mb: 2 }}>
-                <FormControl sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                  <Typography component="label" htmlFor="currently-studying" sx={{ mr: 2 }}>
-                    Обучаюсь в настоящее время
-                  </Typography>
-                  <input
-                    id="currently-studying"
-                    type="checkbox"
-                    checked={currentEducation.isCurrentlyStudying}
-                    onChange={e => handleFieldChange('isCurrentlyStudying', e.target.checked)}
-                  />
-                </FormControl>
-              </Box>
-              <Box sx={{ width: '100%', px: 1, mb: 2 }}>
-                <TextField
-                  label="Описание (необязательно)"
-                  fullWidth
-                  multiline
-                  rows={3}
-                  value={currentEducation.description}
-                  onChange={e => handleFieldChange('description', e.target.value)}
-                  placeholder="Дополнительная информация об образовании, специализации, дипломной работе и т.д."
-                />
-              </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <TextField
+              fullWidth
+              label="Учебное заведение"
+              name="institution"
+              value={formData.institution}
+              onChange={handleInputChange}
+              required
+              size={isVerySmall ? 'small' : 'medium'}
+              sx={{
+                '& .MuiInputBase-input': {
+                  fontSize: isVerySmall ? '0.85rem' : undefined,
+                },
+                '& .MuiInputLabel-root': {
+                  fontSize: isVerySmall ? '0.85rem' : undefined,
+                },
+              }}
+            />
+            <Box sx={{ display: 'flex', gap: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+              <TextField
+                fullWidth
+                label="Степень/Уровень"
+                name="degree"
+                value={formData.degree}
+                onChange={handleInputChange}
+                required
+                placeholder="Бакалавр, Магистр, Специалист..."
+                size={isVerySmall ? 'small' : 'medium'}
+                sx={{
+                  '& .MuiInputBase-input': {
+                    fontSize: isVerySmall ? '0.85rem' : undefined,
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontSize: isVerySmall ? '0.85rem' : undefined,
+                  },
+                }}
+              />
+              <TextField
+                fullWidth
+                label="Направление/Специальность"
+                name="fieldOfStudy"
+                value={formData.fieldOfStudy}
+                onChange={handleInputChange}
+                required
+                size={isVerySmall ? 'small' : 'medium'}
+                sx={{
+                  '& .MuiInputBase-input': {
+                    fontSize: isVerySmall ? '0.85rem' : undefined,
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontSize: isVerySmall ? '0.85rem' : undefined,
+                  },
+                }}
+              />
             </Box>
-          </LocalizationProvider>
+            <Box sx={{ display: 'flex', gap: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+              <TextField
+                fullWidth
+                label="Дата начала"
+                name="startDate"
+                type="month"
+                value={formData.startDate}
+                onChange={handleInputChange}
+                required
+                InputLabelProps={{ shrink: true }}
+                size={isVerySmall ? 'small' : 'medium'}
+                sx={{
+                  '& .MuiInputBase-input': {
+                    fontSize: isVerySmall ? '0.85rem' : undefined,
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontSize: isVerySmall ? '0.85rem' : undefined,
+                  },
+                }}
+              />
+              <TextField
+                fullWidth
+                label="Дата окончания"
+                name="endDate"
+                type="month"
+                value={formData.endDate}
+                onChange={handleInputChange}
+                disabled={formData.isCurrent}
+                InputLabelProps={{ shrink: true }}
+                size={isVerySmall ? 'small' : 'medium'}
+                sx={{
+                  '& .MuiInputBase-input': {
+                    fontSize: isVerySmall ? '0.85rem' : undefined,
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontSize: isVerySmall ? '0.85rem' : undefined,
+                  },
+                }}
+              />
+            </Box>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  name="isCurrent"
+                  checked={formData.isCurrent}
+                  onChange={handleInputChange}
+                />
+              }
+              label={
+                <Typography sx={{ fontSize: isVerySmall ? '0.85rem' : undefined }}>
+                  Обучаюсь в настоящее время
+                </Typography>
+              }
+            />
+            <TextField
+              fullWidth
+              label="Средний балл (GPA)"
+              name="gpa"
+              value={formData.gpa}
+              onChange={handleInputChange}
+              placeholder="4.5, 4.8, отлично..."
+              size={isVerySmall ? 'small' : 'medium'}
+              sx={{
+                '& .MuiInputBase-input': {
+                  fontSize: isVerySmall ? '0.85rem' : undefined,
+                },
+                '& .MuiInputLabel-root': {
+                  fontSize: isVerySmall ? '0.85rem' : undefined,
+                },
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Дополнительная информация"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              multiline
+              rows={isVerySmall ? 2 : 3}
+              placeholder="Специализация, достижения, дипломная работа..."
+              size={isVerySmall ? 'small' : 'medium'}
+              sx={{
+                '& .MuiInputBase-input': {
+                  fontSize: isVerySmall ? '0.85rem' : undefined,
+                },
+                '& .MuiInputLabel-root': {
+                  fontSize: isVerySmall ? '0.85rem' : undefined,
+                },
+              }}
+            />
+          </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} startIcon={<Cancel />}>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={handleCloseDialog}
+            size={isVerySmall ? 'small' : 'medium'}
+            sx={{ fontSize: isVerySmall ? '0.75rem' : undefined }}
+          >
             Отмена
           </Button>
           <Button
-            onClick={handleSaveEducation}
+            onClick={handleSave}
             variant="contained"
-            color="primary"
-            startIcon={<Save />}
+            size={isVerySmall ? 'small' : 'medium'}
+            sx={{ fontSize: isVerySmall ? '0.75rem' : undefined }}
           >
             Сохранить
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Диалог подтверждения удаления */}
-      <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>Удалить запись?</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Вы уверены, что хотите удалить эту запись об образовании? Это действие нельзя отменить.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteDialog}>Отмена</Button>
-          <Button onClick={handleDeleteEducation} variant="contained" color="error">
-            Удалить
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Уведомления */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
 
-export default EmployerProfileEducation;
+export default HrProfileEducation;

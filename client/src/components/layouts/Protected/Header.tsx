@@ -23,7 +23,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import logo from '../../../assets/images/logoNNGP.svg';
-import { logout } from '../../../features/auth/authSlice';
+import { logout } from '../../../features/auth/mockAuthSlice';
 import Image from '../../common/Image';
 
 interface HeaderProps {
@@ -38,8 +38,8 @@ export const Header = ({ onToggleSidebar, isMobileView }: HeaderProps) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  // Получаем данные пользователя из Redux store
-  const user = useAppSelector(state => state.auth.user);
+  // Получаем данные пользователя из mock auth Redux store
+  const user = useAppSelector(state => state.mockAuth.user);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -58,16 +58,16 @@ export const Header = ({ onToggleSidebar, isMobileView }: HeaderProps) => {
   const handleProfileClick = () => {
     handleMenuClose();
     // Перенаправляем на соответствующую страницу профиля в зависимости от роли
-    const userRole = user?.roles?.[0] || '';
+    const userRole = user?.role || '';
 
     if (userRole === 'candidate') {
-      navigate('/candidate/profile');
-    } else if (userRole === 'employee') {
-      navigate('/employee/profile');
+      navigate('/app/candidate/profile');
+    } else if (userRole === 'employer') {
+      navigate('/app/employer/profile');
     } else if (userRole === 'hr') {
-      navigate('/hr/profile');
+      navigate('/app/hr/profile');
     } else if (userRole === 'admin') {
-      navigate('/admin/panel');
+      navigate('/app/admin/panel');
     } else {
       // Если роль неизвестна, перенаправляем на корень
       navigate('/');

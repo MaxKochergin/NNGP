@@ -1,26 +1,19 @@
 // client/src/features/auth/hooks/useLoginForm.ts
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
-import { useLoginMutation } from '../authApiSlice';
+import { AppDispatch, RootState } from '../../../app/store';
+import { mockLogin, selectMockError, selectMockIsLoading } from '../mockAuthSlice';
 
-// Схема валидации для формы входа
+// Упрощенная схема валидации для mock авторизации
 const loginSchema = yup.object({
-  email: yup
-    .string()
-    .email('Введите корректный email')
-    .required('Email обязателен')
-    .max(30, 'Email не должен превышать 30 символов'),
+  email: yup.string().email('Введите корректный email').required('Email обязателен'),
   password: yup
     .string()
     .required('Пароль обязателен')
-    .min(6, 'Пароль должен содержать минимум 6 символов')
-    .max(30, 'Пароль не должен превышать 30 символов')
-    .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Пароль должен содержать как минимум одну заглавную букву, одну строчную букву и одну цифру'
-    ),
+    .min(3, 'Пароль должен содержать минимум 3 символа'),
 });
 
 // Тип для данных формы
@@ -30,20 +23,28 @@ export type LoginFormInputs = {
 };
 
 // Функция для определения базового маршрута по роли пользователя
-const getDefaultRouteByRole = (roles: string[] | undefined): string => {
-  if (!roles || roles.length === 0) return '/';
-
-  if (roles.includes('admin')) return '/app/admin';
-  if (roles.includes('hr')) return '/app/hr';
-  if (roles.includes('employee')) return '/app/employee';
-  if (roles.includes('candidate')) return '/app/candidate';
-
-  return '/';
+const getDefaultRouteByRole = (role: string): string => {
+  switch (role) {
+    case 'admin':
+      return '/app/admin/panel';
+    case 'hr':
+      return '/app/hr/profile';
+    case 'employer':
+      return '/app/employer/profile';
+    case 'candidate':
+      return '/app/candidate/profile';
+    default:
+      return '/';
+  }
 };
 
 export const useLoginForm = () => {
   const navigate = useNavigate();
-  const [login, { isLoading, error }] = useLoginMutation();
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Получаем состояние из mock auth slice
+  const isLoading = useSelector(selectMockIsLoading);
+  const error = useSelector(selectMockError);
 
   // Инициализация React Hook Form с валидацией Yup
   const {
@@ -62,29 +63,21 @@ export const useLoginForm = () => {
   const onSubmit = async (data: LoginFormInputs) => {
     try {
       console.log('🔐 Попытка входа с данными:', { email: data.email });
-      const result = await login(data).unwrap();
+
+      const result = await dispatch(mockLogin(data)).unwrap();
 
       console.log('✅ Успешный вход, результат:', result);
-      console.log('🔑 Токен получен:', !!result.access_token);
+      console.log('🔑 Токен получен:', !!result.token);
       console.log('👤 Данные пользователя:', result.user);
 
-      // Сохраняем токен в localStorage - для отладки
-      if (result.access_token) {
-        console.log('💾 Сохраняем токен в localStorage');
-        localStorage.setItem('token_debug', result.access_token);
+      if (result.user) {
+        // Определяем маршрут перенаправления в зависимости от роли
+        const redirectRoute = getDefaultRouteByRole(result.user.role);
+        console.log('🔄 Перенаправление на:', redirectRoute);
+
+        navigate(redirectRoute); // Перенаправление после успешного входа
       }
-
-      // Получаем роли пользователя из результата авторизации
-      const userRoles = result.user?.roles || [];
-      console.log('🛡️ Роли пользователя:', userRoles);
-
-      // Определяем маршрут перенаправления в зависимости от роли
-      const redirectRoute = getDefaultRouteByRole(userRoles);
-      console.log('🔄 Перенаправление на:', redirectRoute);
-
-      navigate(redirectRoute); // Перенаправление после успешного входа
     } catch (err) {
-      // Обработка ошибок выполняется RTK Query
       console.error('❌ Ошибка входа:', err);
     }
   };

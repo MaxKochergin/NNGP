@@ -1,134 +1,121 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Add as AddIcon,
+  Clear as ClearIcon,
+  Delete as DeleteIcon,
   FilterList as FilterListIcon,
+  Refresh as RefreshIcon,
   Search as SearchIcon,
 } from '@mui/icons-material';
 import {
+  Alert,
   Box,
   Button,
   Chip,
+  CircularProgress,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Divider,
   Drawer,
+  Fab,
   Grid,
   IconButton,
   InputAdornment,
   Paper,
+  Stack,
+  SwipeableDrawer,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useEmployees } from '../../../features/employees/employeesHooks';
+import { EmployeeBasicInfo } from '../../../features/employees/employeesSlice';
 import EmployeeCard from './EmployeeCard';
 import EmployeeFilters from './EmployeeFilters';
-
-// Типы данных для сотрудников
-export interface Employee {
-  id: string;
-  name: string;
-  position: string;
-  department: string;
-  experience: string;
-  status: string;
-  hireDate: string;
-  skills: string[];
-  avatar: string | null;
-}
-
-// Временные тестовые данные
-const mockEmployees: Employee[] = [
-  {
-    id: '1',
-    name: 'Смирнов Дмитрий Константинович',
-    position: 'Ведущий инженер-конструктор',
-    department: 'Конструкторский отдел',
-    experience: '5 лет',
-    status: 'Работает',
-    hireDate: '2025-04-15',
-    skills: ['AutoCAD', 'Revit', 'ЛИРА-САПР', 'Железобетонные конструкции'],
-    avatar: null,
-  },
-  {
-    id: '2',
-    name: 'Соловьева Мария Андреевна',
-    position: 'Инженер-проектировщик ОВиК',
-    department: 'Отдел инженерных систем',
-    experience: '3 года',
-    status: 'Работает',
-    hireDate: '2025-04-10',
-    skills: ['AutoCAD', 'Revit MEP', 'Расчет систем вентиляции'],
-    avatar: null,
-  },
-  {
-    id: '3',
-    name: 'Николаев Алексей Викторович',
-    position: 'Главный инженер проекта',
-    department: 'Управление проектами',
-    experience: '8 лет',
-    status: 'Работает',
-    hireDate: '2024-11-03',
-    skills: ['BIM', 'Управление проектами', 'Нормативная документация', 'Техническая экспертиза'],
-    avatar: null,
-  },
-  {
-    id: '4',
-    name: 'Белова Екатерина Николаевна',
-    position: 'Главный архитектор',
-    department: 'Архитектурный отдел',
-    experience: '7 лет',
-    status: 'Отпуск',
-    hireDate: '2025-01-15',
-    skills: ['ArchiCAD', 'Revit', '3D моделирование', 'Концептуальное проектирование'],
-    avatar: null,
-  },
-  {
-    id: '5',
-    name: 'Кузнецов Виталий Александрович',
-    position: 'BIM-координатор',
-    department: 'BIM-отдел',
-    experience: '4 года',
-    status: 'Работает',
-    hireDate: '2025-02-20',
-    skills: ['Revit', 'Navisworks', 'BIM-координация', 'Autodesk BIM 360'],
-    avatar: null,
-  },
-];
 
 const EmployeesList = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>(mockEmployees);
-  const [filterApplied, setFilterApplied] = useState(false);
+  // Состояние для диалога удаления
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeBasicInfo | null>(null);
+
+  // Используем Redux hooks вместо локального состояния
+  const {
+    // Данные
+    filteredEmployees,
+    statistics,
+
+    // Состояния загрузки
+    isLoading,
+    isDeleting,
+    error,
+    lastUpdated,
+
+    // Поиск
+    searchQuery,
+    setSearch,
+    clearSearchQuery,
+
+    // Фильтры
+    filters,
+    activeFiltersCount,
+    filtersOpen,
+    applyFilters,
+    clearAllFilters,
+    toggleFiltersOpen,
+
+    // CRUD операции
+    loadEmployees,
+    refreshEmployees,
+    deleteEmployeeById,
+  } = useEmployees();
+
+  // Загружаем сотрудников при монтировании компонента
+  useEffect(() => {
+    loadEmployees();
+  }, [loadEmployees]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const query = event.target.value;
-    setSearchQuery(query);
+    setSearch(event.target.value);
+  };
 
-    if (query.trim() === '') {
-      setFilteredEmployees(mockEmployees);
-    } else {
-      const filtered = mockEmployees.filter(
-        employee =>
-          employee.name.toLowerCase().includes(query.toLowerCase()) ||
-          employee.position.toLowerCase().includes(query.toLowerCase()) ||
-          employee.department.toLowerCase().includes(query.toLowerCase()) ||
-          employee.skills.some(skill => skill.toLowerCase().includes(query.toLowerCase()))
-      );
-      setFilteredEmployees(filtered);
+  const clearSearch = () => {
+    clearSearchQuery();
+  };
+
+  const handleDeleteEmployee = (employeeId: string) => {
+    const employee = filteredEmployees.find(e => e.id === employeeId);
+    if (employee) {
+      setEmployeeToDelete(employee);
+      setDeleteDialogOpen(true);
     }
   };
 
-  const handleFilterClick = () => {
-    setFiltersOpen(true);
+  const handleDeleteConfirm = async () => {
+    if (employeeToDelete) {
+      try {
+        await deleteEmployeeById(employeeToDelete.id);
+        setDeleteDialogOpen(false);
+        setEmployeeToDelete(null);
+      } catch (error) {
+        console.error('Ошибка при удалении сотрудника:', error);
+        // Здесь можно добавить уведомление об ошибке
+      }
+    }
   };
 
-  const handleFilterClose = () => {
-    setFiltersOpen(false);
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setEmployeeToDelete(null);
   };
 
   const handleEmployeeClick = (employeeId: string) => {
@@ -139,181 +126,399 @@ const EmployeesList = () => {
     navigate('/app/hr/employees/new');
   };
 
-  const applyFilters = (filters: any) => {
-    // Логика применения фильтров
-    // В реальном приложении здесь будет более сложная логика фильтрации
-    const filtered = mockEmployees.filter(employee => {
-      if (
-        filters.department &&
-        filters.department !== 'any' &&
-        employee.department !== filters.department
-      ) {
-        return false;
-      }
-      if (
-        filters.position &&
-        filters.position !== 'any' &&
-        !employee.position.includes(filters.position)
-      ) {
-        return false;
-      }
-      if (filters.status && filters.status !== 'any' && employee.status !== filters.status) {
-        return false;
-      }
-      return true;
-    });
-
-    setFilteredEmployees(filtered);
-    setFilterApplied(true);
-    setFiltersOpen(false);
-  };
-
-  const clearFilters = () => {
-    setFilteredEmployees(mockEmployees);
-    setFilterApplied(false);
-    setFiltersOpen(false);
+  const getGridColumns = () => {
+    if (isMobile) return { xs: 12 };
+    return { xs: 12, sm: 6, md: 4, lg: 3, xl: 3 };
   };
 
   return (
-    <Container maxWidth="xl" sx={{ mt: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 } }}>
-      <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: { xs: 0, sm: 1 } }}>
-        {/* Заголовок и поиск */}
-        <Box sx={{ mb: 3, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{
-              flexGrow: 1,
-              fontSize: { xs: '1.7rem', sm: '2rem', md: '2.125rem' },
-            }}
-          >
-            Сотрудники
-            {filterApplied && (
-              <Chip
-                label="Фильтры активны"
-                size="small"
-                color="primary"
-                onDelete={clearFilters}
-                sx={{ ml: 2, verticalAlign: 'middle' }}
-              />
-            )}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', sm: 'auto' } }}>
-            <TextField
-              size="small"
-              placeholder="Поиск сотрудников..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ width: { xs: '100%', sm: 240, md: 300 } }}
-            />
-            <Button
-              variant="outlined"
-              startIcon={<FilterListIcon />}
-              onClick={handleFilterClick}
-              sx={{ display: { xs: 'none', sm: 'flex' } }}
-            >
-              Фильтры
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleAddEmployee}
-              sx={{ display: { xs: 'none', sm: 'flex' } }}
-            >
-              Добавить
-            </Button>
-          </Box>
-        </Box>
-
-        {/* Мобильные кнопки */}
-        <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: 1, mb: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<FilterListIcon />}
-            onClick={handleFilterClick}
-            fullWidth
-          >
-            Фильтры
-          </Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddEmployee} fullWidth>
-            Добавить
-          </Button>
-        </Box>
-
-        {/* Список сотрудников */}
-        {filteredEmployees.length > 0 ? (
-          <Box sx={{ mt: 0.5 }}>
-            <Grid
-              container
-              spacing={{ xs: 2, sm: 3 }}
-              alignItems="stretch"
-              sx={{
-                '& .MuiGrid-item': {
-                  display: 'flex',
-                },
-              }}
-            >
-              {filteredEmployees.map(employee => (
-                <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                  md={4}
-                  lg={3}
-                  key={employee.id}
-                  sx={{
-                    height: { xs: 'auto', sm: '250px', md: '260px', lg: '270px' },
-                  }}
-                >
-                  <EmployeeCard
-                    employee={employee}
-                    onClick={() => handleEmployeeClick(employee.id)}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        ) : (
-          <Box sx={{ textAlign: 'center', py: 5 }}>
-            <Typography variant="h6" color="text.secondary">
-              Сотрудники не найдены
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Попробуйте изменить параметры поиска или фильтрации
-            </Typography>
-          </Box>
-        )}
-      </Paper>
-
-      {/* Мобильные фильтры */}
-      <Drawer
-        anchor={isMobile ? 'bottom' : 'right'}
-        open={filtersOpen}
-        onClose={handleFilterClose}
+    <Container
+      maxWidth="xl"
+      sx={{
+        mt: { xs: 2, sm: 3 },
+        mb: { xs: 2, sm: 3 },
+        px: { xs: 2, sm: 3 },
+      }}
+    >
+      <Paper
         sx={{
-          '& .MuiDrawer-paper': {
-            width: { xs: '100%', sm: 400 },
-            height: { xs: 'auto', sm: '100%' },
-            maxHeight: { xs: '85vh', sm: '100%' },
-            p: { xs: 2, sm: 3 },
-            borderTopLeftRadius: { xs: 16, sm: 0 },
-            borderTopRightRadius: { xs: 16, sm: 0 },
-          },
+          p: { xs: 2, sm: 3 },
+          borderRadius: 2,
+          minHeight: '70vh',
         }}
       >
-        <EmployeeFilters
-          onClose={handleFilterClose}
-          onApply={applyFilters}
-          onClear={clearFilters}
-        />
-      </Drawer>
+        {/* Заголовок */}
+        <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: 'space-between',
+              gap: { xs: 1, sm: 2 },
+            }}
+          >
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{
+                fontSize: {
+                  xs: '1.7rem',
+                  sm: '2rem',
+                  md: '2.125rem',
+                },
+                fontWeight: 'bold',
+                color: 'primary.main',
+              }}
+            >
+              Сотрудники
+              {activeFiltersCount > 0 && (
+                <Chip
+                  label={`Фильтры: ${activeFiltersCount}`}
+                  size="small"
+                  color="primary"
+                  onDelete={clearAllFilters}
+                  sx={{
+                    ml: { xs: 0, sm: 2 },
+                    mt: { xs: 1, sm: 0 },
+                    verticalAlign: { xs: 'baseline', sm: 'middle' },
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                  }}
+                />
+              )}
+            </Typography>
+
+            {/* Кнопка обновления */}
+            <IconButton
+              onClick={refreshEmployees}
+              disabled={isLoading}
+              sx={{
+                display: { xs: 'flex', sm: 'none' },
+                alignSelf: 'flex-end',
+              }}
+            >
+              {isLoading ? <CircularProgress size={20} /> : <RefreshIcon />}
+            </IconButton>
+          </Box>
+
+          {/* Статистика */}
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              mt: 1,
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+            }}
+          >
+            Всего сотрудников: {statistics?.total || 0} • Показано: {filteredEmployees.length}
+            {lastUpdated && <> • Обновлено: {new Date(lastUpdated).toLocaleTimeString()}</>}
+          </Typography>
+        </Box>
+
+        {/* Поиск и фильтры */}
+        <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+          {/* Мобильная версия поиска */}
+          {isMobile ? (
+            <Stack spacing={2}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Поиск сотрудников..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: searchQuery && (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={clearSearch} sx={{ p: 0.5 }}>
+                          <ClearIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiInputBase-input': {
+                      fontSize: { xs: '0.875rem', sm: '1rem' },
+                      py: { xs: 1, sm: 1.5 },
+                    },
+                  }}
+                />
+                <Button
+                  variant="outlined"
+                  startIcon={<FilterListIcon />}
+                  onClick={() => toggleFiltersOpen(true)}
+                  sx={{
+                    minWidth: { xs: 'auto', sm: 120 },
+                    px: { xs: 1.5, sm: 2 },
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  }}
+                >
+                  Фильтры
+                  {activeFiltersCount > 0 && (
+                    <Chip
+                      label={activeFiltersCount}
+                      size="small"
+                      sx={{ ml: 1, height: 16, fontSize: '0.6rem' }}
+                    />
+                  )}
+                </Button>
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddEmployee}
+                  fullWidth
+                  sx={{
+                    py: { xs: 1, sm: 1.5 },
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                  }}
+                >
+                  Добавить сотрудника
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={isLoading ? <CircularProgress size={16} /> : <RefreshIcon />}
+                  onClick={refreshEmployees}
+                  disabled={isLoading}
+                  sx={{
+                    minWidth: { xs: 'auto', sm: 120 },
+                    px: { xs: 1.5, sm: 2 },
+                  }}
+                >
+                  Обновить
+                </Button>
+              </Box>
+            </Stack>
+          ) : (
+            /* Десктопная версия поиска */
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                placeholder="Поиск сотрудников..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchQuery && (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={clearSearch}>
+                        <ClearIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ width: { sm: 240, md: 300, lg: 400 } }}
+              />
+              <Button
+                variant="outlined"
+                startIcon={<FilterListIcon />}
+                onClick={() => toggleFiltersOpen(true)}
+              >
+                Фильтры
+                {activeFiltersCount > 0 && (
+                  <Chip
+                    label={activeFiltersCount}
+                    size="small"
+                    sx={{ ml: 1, height: 20, fontSize: '0.7rem' }}
+                  />
+                )}
+              </Button>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddEmployee}>
+                Добавить
+              </Button>
+              <IconButton onClick={refreshEmployees} disabled={isLoading} title="Обновить список">
+                {isLoading ? <CircularProgress size={20} /> : <RefreshIcon />}
+              </IconButton>
+            </Box>
+          )}
+        </Box>
+
+        {/* Ошибка загрузки */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Список сотрудников */}
+        {isLoading && filteredEmployees.length === 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : filteredEmployees.length > 0 ? (
+          <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
+            {filteredEmployees.map((employee: EmployeeBasicInfo) => (
+              <Grid item {...getGridColumns()} key={employee.id}>
+                <EmployeeCard
+                  employee={employee}
+                  onClick={() => handleEmployeeClick(employee.id)}
+                  onDelete={handleDeleteEmployee}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Box
+            sx={{
+              textAlign: 'center',
+              py: { xs: 4, sm: 6 },
+              px: { xs: 2, sm: 4 },
+            }}
+          >
+            <Typography
+              variant="h6"
+              color="text.secondary"
+              sx={{
+                mb: 2,
+                fontSize: { xs: '1rem', sm: '1.25rem' },
+              }}
+            >
+              {searchQuery || activeFiltersCount > 0
+                ? 'Сотрудники не найдены'
+                : 'Список сотрудников пуст'}
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                mb: 3,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+              }}
+            >
+              {searchQuery || activeFiltersCount > 0
+                ? 'Попробуйте изменить критерии поиска или фильтры'
+                : 'Добавьте первого сотрудника в систему'}
+            </Typography>
+            {searchQuery || activeFiltersCount > 0 ? (
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  clearSearchQuery();
+                  clearAllFilters();
+                }}
+                sx={{ mr: 2 }}
+              >
+                Сбросить фильтры
+              </Button>
+            ) : null}
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddEmployee}>
+              Добавить сотрудника
+            </Button>
+          </Box>
+        )}
+
+        {/* Фильтры в Drawer */}
+        {isMobile ? (
+          <SwipeableDrawer
+            anchor="bottom"
+            open={filtersOpen}
+            onClose={() => toggleFiltersOpen(false)}
+            onOpen={() => toggleFiltersOpen(true)}
+            disableSwipeToOpen={false}
+            ModalProps={{
+              keepMounted: true,
+            }}
+            sx={{
+              '& .MuiDrawer-paper': {
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+                maxHeight: '80vh',
+              },
+            }}
+          >
+            <Box sx={{ p: 2 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Фильтры
+              </Typography>
+              <EmployeeFilters
+                onApplyFilters={applyFilters}
+                onClearFilters={clearAllFilters}
+                currentFilters={filters}
+              />
+            </Box>
+          </SwipeableDrawer>
+        ) : (
+          <Drawer
+            anchor="right"
+            open={filtersOpen}
+            onClose={() => toggleFiltersOpen(false)}
+            sx={{
+              '& .MuiDrawer-paper': {
+                width: 320,
+                p: 3,
+              },
+            }}
+          >
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Фильтры
+            </Typography>
+            <EmployeeFilters
+              onApplyFilters={applyFilters}
+              onClearFilters={clearAllFilters}
+              currentFilters={filters}
+            />
+          </Drawer>
+        )}
+
+        {/* FAB для мобильных устройств */}
+        {isMobile && (
+          <Fab
+            color="primary"
+            aria-label="add"
+            onClick={handleAddEmployee}
+            sx={{
+              position: 'fixed',
+              bottom: { xs: 16, sm: 24 },
+              right: { xs: 16, sm: 24 },
+              zIndex: 1000,
+            }}
+          >
+            <AddIcon />
+          </Fab>
+        )}
+
+        {/* Диалог подтверждения удаления */}
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={handleDeleteCancel}
+          aria-labelledby="delete-dialog-title"
+          aria-describedby="delete-dialog-description"
+        >
+          <DialogTitle id="delete-dialog-title">Подтверждение удаления</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="delete-dialog-description">
+              Вы уверены, что хотите удалить сотрудника <strong>{employeeToDelete?.name}</strong>?
+              Это действие нельзя отменить. Все данные сотрудника, включая заметки и оценки, будут
+              удалены.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDeleteCancel} disabled={isDeleting}>
+              Отмена
+            </Button>
+            <Button
+              onClick={handleDeleteConfirm}
+              autoFocus
+              color="error"
+              disabled={isDeleting}
+              startIcon={isDeleting ? <CircularProgress size={16} /> : <DeleteIcon />}
+            >
+              {isDeleting ? 'Удаление...' : 'Удалить'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Paper>
     </Container>
   );
 };

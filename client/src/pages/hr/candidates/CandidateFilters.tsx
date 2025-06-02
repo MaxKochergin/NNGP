@@ -1,5 +1,9 @@
-import { useState } from 'react';
-import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
+import { useEffect, useState } from 'react';
+import {
+  Add as AddIcon,
+  Close as CloseIcon,
+  DragHandle as DragHandleIcon,
+} from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -12,16 +16,19 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Slider,
   Stack,
   Switch,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
+import { useCandidatesFilters } from '../../../features/candidates/candidatesHooks';
+import { CandidateFilters as CandidateFiltersType } from '../../../features/candidates/candidatesSlice';
 
 interface CandidateFiltersProps {
   onClose: () => void;
-  onApply: (filters: any) => void;
+  onApply: (filters: CandidateFiltersType) => void;
   onClear: () => void;
 }
 
@@ -62,13 +69,30 @@ const activityPeriods = [
 ];
 
 const CandidateFilters = ({ onClose, onApply, onClear }: CandidateFiltersProps) => {
-  const [status, setStatus] = useState('any');
-  const [position, setPosition] = useState('any');
-  const [experience, setExperience] = useState('any');
-  const [activity, setActivity] = useState('any');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Получаем текущие фильтры из Redux
+  const { filters: currentFilters, activeFiltersCount } = useCandidatesFilters();
+
+  // Локальное состояние для формы
+  const [status, setStatus] = useState(currentFilters.status || 'any');
+  const [position, setPosition] = useState(currentFilters.position || 'any');
+  const [experience, setExperience] = useState(currentFilters.experience || 'any');
+  const [activity, setActivity] = useState(currentFilters.activity || 'any');
   const [skill, setSkill] = useState('');
-  const [skills, setSkills] = useState<string[]>([]);
-  const [onlyWithResume, setOnlyWithResume] = useState(false);
+  const [skills, setSkills] = useState<string[]>(currentFilters.skills || []);
+  const [onlyWithResume, setOnlyWithResume] = useState(currentFilters.onlyWithResume || false);
+
+  // Синхронизируем локальное состояние с Redux при изменении фильтров
+  useEffect(() => {
+    setStatus(currentFilters.status || 'any');
+    setPosition(currentFilters.position || 'any');
+    setExperience(currentFilters.experience || 'any');
+    setActivity(currentFilters.activity || 'any');
+    setSkills(currentFilters.skills || []);
+    setOnlyWithResume(currentFilters.onlyWithResume || false);
+  }, [currentFilters]);
 
   const handleAddSkill = () => {
     if (skill && !skills.includes(skill)) {
@@ -82,21 +106,76 @@ const CandidateFilters = ({ onClose, onApply, onClear }: CandidateFiltersProps) 
   };
 
   const handleApplyFilters = () => {
-    const filters = {
-      status: status === 'any' ? '' : status,
-      position: position === 'any' ? '' : position,
-      experience,
-      activity,
-      skills,
-      onlyWithResume,
+    const filters: CandidateFiltersType = {
+      status: status === 'any' ? undefined : status,
+      position: position === 'any' ? undefined : position,
+      experience: experience === 'any' ? undefined : experience,
+      activity: activity === 'any' ? undefined : activity,
+      skills: skills.length > 0 ? skills : undefined,
+      onlyWithResume: onlyWithResume || undefined,
     };
     onApply(filters);
   };
 
+  const handleClearFilters = () => {
+    setStatus('any');
+    setPosition('any');
+    setExperience('any');
+    setActivity('any');
+    setSkills([]);
+    setOnlyWithResume(false);
+    onClear();
+  };
+
+  const hasChanges = () => {
+    return (
+      status !== (currentFilters.status || 'any') ||
+      position !== (currentFilters.position || 'any') ||
+      experience !== (currentFilters.experience || 'any') ||
+      activity !== (currentFilters.activity || 'any') ||
+      JSON.stringify(skills) !== JSON.stringify(currentFilters.skills || []) ||
+      onlyWithResume !== (currentFilters.onlyWithResume || false)
+    );
+  };
+
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Фильтры кандидатов</Typography>
+      {/* Заголовок с drag handle для мобильных */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2,
+          position: 'relative',
+        }}
+      >
+        {isMobile && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -16,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 40,
+              height: 4,
+              bgcolor: 'divider',
+              borderRadius: 2,
+            }}
+          />
+        )}
+
+        <Typography variant="h6" sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
+          Фильтры кандидатов
+          {activeFiltersCount > 0 && (
+            <Chip
+              label={activeFiltersCount}
+              size="small"
+              color="primary"
+              sx={{ ml: 1, height: 20, fontSize: '0.75rem' }}
+            />
+          )}
+        </Typography>
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
@@ -104,8 +183,24 @@ const CandidateFilters = ({ onClose, onApply, onClear }: CandidateFiltersProps) 
 
       <Divider sx={{ mb: 3 }} />
 
-      <Stack spacing={3} sx={{ flexGrow: 1, overflow: 'auto' }}>
-        <FormControl fullWidth>
+      <Stack
+        spacing={3}
+        sx={{
+          flexGrow: 1,
+          overflow: 'auto',
+          '&::-webkit-scrollbar': {
+            width: 6,
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: theme.palette.divider,
+            borderRadius: 3,
+          },
+        }}
+      >
+        <FormControl fullWidth size={isMobile ? 'small' : 'medium'}>
           <InputLabel id="status-label">Статус</InputLabel>
           <Select
             labelId="status-label"
@@ -122,7 +217,7 @@ const CandidateFilters = ({ onClose, onApply, onClear }: CandidateFiltersProps) 
           </Select>
         </FormControl>
 
-        <FormControl fullWidth>
+        <FormControl fullWidth size={isMobile ? 'small' : 'medium'}>
           <InputLabel id="position-label">Должность</InputLabel>
           <Select
             labelId="position-label"
@@ -139,7 +234,7 @@ const CandidateFilters = ({ onClose, onApply, onClear }: CandidateFiltersProps) 
           </Select>
         </FormControl>
 
-        <FormControl fullWidth>
+        <FormControl fullWidth size={isMobile ? 'small' : 'medium'}>
           <InputLabel id="experience-label">Опыт работы</InputLabel>
           <Select
             labelId="experience-label"
@@ -157,13 +252,17 @@ const CandidateFilters = ({ onClose, onApply, onClear }: CandidateFiltersProps) 
         </FormControl>
 
         <Box>
-          <Typography variant="subtitle2" gutterBottom>
+          <Typography
+            variant="subtitle2"
+            gutterBottom
+            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+          >
             Навыки
           </Typography>
-          <Box sx={{ display: 'flex', mb: 1 }}>
+          <Box sx={{ display: 'flex', mb: 1, gap: 1 }}>
             <TextField
               fullWidth
-              size="small"
+              size={isMobile ? 'small' : 'medium'}
               placeholder="Введите навык"
               value={skill}
               onChange={e => setSkill(e.target.value)}
@@ -174,18 +273,34 @@ const CandidateFilters = ({ onClose, onApply, onClear }: CandidateFiltersProps) 
                 }
               }}
             />
-            <Button variant="contained" sx={{ ml: 1 }} onClick={handleAddSkill} disabled={!skill}>
+            <Button
+              variant="contained"
+              onClick={handleAddSkill}
+              disabled={!skill}
+              sx={{ minWidth: 'auto', px: { xs: 1, sm: 2 } }}
+            >
               <AddIcon />
             </Button>
           </Box>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, minHeight: 32 }}>
             {skills.map(s => (
-              <Chip key={s} label={s} onDelete={() => handleRemoveSkill(s)} size="small" />
+              <Chip
+                key={s}
+                label={s}
+                onDelete={() => handleRemoveSkill(s)}
+                size="small"
+                sx={{ fontSize: '0.75rem' }}
+              />
             ))}
+            {skills.length === 0 && (
+              <Typography variant="caption" color="text.secondary" sx={{ py: 1 }}>
+                Навыки не выбраны
+              </Typography>
+            )}
           </Box>
         </Box>
 
-        <FormControl fullWidth>
+        <FormControl fullWidth size={isMobile ? 'small' : 'medium'}>
           <InputLabel id="activity-label">Активность</InputLabel>
           <Select
             labelId="activity-label"
@@ -208,23 +323,48 @@ const CandidateFilters = ({ onClose, onApply, onClear }: CandidateFiltersProps) 
               <Switch
                 checked={onlyWithResume}
                 onChange={e => setOnlyWithResume(e.target.checked)}
+                size={isMobile ? 'small' : 'medium'}
               />
             }
-            label="Только с резюме"
+            label={
+              <Typography variant="body2" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                Только с резюме
+              </Typography>
+            }
           />
         </FormGroup>
       </Stack>
 
-      <Divider sx={{ my: 3 }} />
+      <Divider sx={{ my: 2 }} />
 
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button variant="outlined" fullWidth onClick={onClear}>
-          Сбросить
+      {/* Кнопки действий */}
+      <Stack spacing={2}>
+        <Button
+          variant="contained"
+          onClick={handleApplyFilters}
+          disabled={!hasChanges()}
+          fullWidth
+          size={isMobile ? 'medium' : 'large'}
+        >
+          Применить фильтры
+          {activeFiltersCount > 0 && ` (${activeFiltersCount})`}
         </Button>
-        <Button variant="contained" fullWidth onClick={handleApplyFilters}>
-          Применить
-        </Button>
-      </Box>
+
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            onClick={handleClearFilters}
+            disabled={activeFiltersCount === 0}
+            fullWidth
+            size={isMobile ? 'medium' : 'large'}
+          >
+            Сбросить все
+          </Button>
+          <Button variant="text" onClick={onClose} fullWidth size={isMobile ? 'medium' : 'large'}>
+            Отмена
+          </Button>
+        </Stack>
+      </Stack>
     </Box>
   );
 };

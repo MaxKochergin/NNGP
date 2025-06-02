@@ -13,6 +13,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Container,
   Divider,
   FormControl,
@@ -33,58 +34,25 @@ import {
   Typography,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-
-// Тестовые данные для редактирования
-const mockCandidateDetails = {
-  id: '1',
-  name: 'Королев Антон Павлович',
-  position: 'Инженер-конструктор',
-  experience: '5 лет',
-  status: 'На собеседовании',
-  lastActivity: '2024-03-15',
-  skills: [
-    'AutoCAD',
-    'Revit',
-    'Железобетонные конструкции',
-    'ЛИРА-САПР',
-    'Нормативная документация',
-  ],
-  email: 'korolev@example.com',
-  phone: '+7 (999) 123-45-67',
-  resumeUrl: '/documents/resume1.pdf',
-  salary: '120000',
-  location: 'Москва',
-  education: [
-    {
-      id: '1',
-      degree: 'Магистр',
-      specialty: 'Промышленное и гражданское строительство',
-      university: 'Московский государственный строительный университет',
-      year: '2018',
-      description: 'Специализация: проектирование железобетонных конструкций. Диплом с отличием.',
-    },
-  ],
-  workExperience: [
-    {
-      id: '1',
-      company: 'ООО "СтройПроект"',
-      position: 'Инженер-конструктор',
-      period: '2018-2023',
-      description:
-        'Проектирование железобетонных конструкций многоквартирных жилых домов. Расчет конструкций в ЛИРА-САПР. Разработка рабочей документации.',
-    },
-  ],
-};
+import {
+  useCandidateDetails,
+  useCandidatesCRUD,
+} from '../../../features/candidates/candidatesHooks';
+import {
+  CandidateDetailed,
+  CandidateEducation,
+  CandidateWorkExperience,
+} from '../../../features/candidates/candidatesSlice';
 
 // Пустые данные для нового кандидата
-const emptyCandidate = {
-  id: '',
+const emptyCandidate: Omit<CandidateDetailed, 'id'> = {
   name: '',
   position: '',
   experience: '',
   status: 'Новый',
   lastActivity: new Date().toISOString().split('T')[0],
   skills: [],
+  avatar: null,
   email: '',
   phone: '',
   resumeUrl: '',
@@ -92,6 +60,8 @@ const emptyCandidate = {
   location: '',
   education: [],
   workExperience: [],
+  notes: [],
+  interviews: [],
 };
 
 // Доступные статусы кандидатов
@@ -112,11 +82,20 @@ const CandidateForm = () => {
   const navigate = useNavigate();
   const isNewCandidate = !id || id === 'new';
 
-  const [candidate, setCandidate] = useState(
-    isNewCandidate ? emptyCandidate : mockCandidateDetails
-  );
-  const [loading, setLoading] = useState(!isNewCandidate);
-  const [saving, setSaving] = useState(false);
+  // Redux hooks
+  const {
+    selectedCandidate,
+    isLoadingDetails,
+    detailsError,
+    loadCandidate,
+    clearSelectedCandidate,
+  } = useCandidateDetails();
+
+  const { isCreating, isUpdating, createCandidateWithDetails, updateCandidateWithDetails } =
+    useCandidatesCRUD();
+
+  // Локальное состояние формы
+  const [candidate, setCandidate] = useState<Omit<CandidateDetailed, 'id'>>(emptyCandidate);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [newSkill, setNewSkill] = useState('');
@@ -142,29 +121,53 @@ const CandidateForm = () => {
 
   // Загрузка данных кандидата при редактировании
   useEffect(() => {
-    if (!isNewCandidate) {
-      setLoading(true);
-      // Имитация запроса к API
-      setTimeout(() => {
-        setCandidate(mockCandidateDetails);
-        setLoading(false);
-      }, 1000);
+    if (!isNewCandidate && id) {
+      loadCandidate(id);
     }
-  }, [id, isNewCandidate]);
+
+    return () => {
+      clearSelectedCandidate();
+    };
+  }, [id, isNewCandidate, loadCandidate, clearSelectedCandidate]);
+
+  // Синхронизация данных из Redux с локальным состоянием
+  useEffect(() => {
+    if (selectedCandidate && !isNewCandidate) {
+      setCandidate({
+        name: selectedCandidate.name,
+        position: selectedCandidate.position,
+        experience: selectedCandidate.experience,
+        status: selectedCandidate.status,
+        lastActivity: selectedCandidate.lastActivity,
+        skills: selectedCandidate.skills,
+        avatar: selectedCandidate.avatar,
+        email: selectedCandidate.email || '',
+        phone: selectedCandidate.phone || '',
+        resumeUrl: selectedCandidate.resumeUrl || '',
+        salary: selectedCandidate.salary || '',
+        location: selectedCandidate.location || '',
+        education: selectedCandidate.education || [],
+        workExperience: selectedCandidate.workExperience || [],
+        notes: selectedCandidate.notes || [],
+        interviews: selectedCandidate.interviews || [],
+      });
+    }
+  }, [selectedCandidate, isNewCandidate]);
 
   // Обработчики изменения полей формы
   const handleChange =
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (field: keyof typeof candidate) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setCandidate({
         ...candidate,
         [field]: e.target.value,
       });
     };
 
-  const handleStatusChange = (e: any) => {
+  const handleSelectChange = (field: keyof typeof candidate) => (e: any) => {
     setCandidate({
       ...candidate,
-      status: e.target.value,
+      [field]: e.target.value,
     });
   };
 
@@ -198,7 +201,7 @@ const CandidateForm = () => {
 
   const handleAddEducation = () => {
     if (newEducation.degree && newEducation.university) {
-      const educationItem = {
+      const educationItem: CandidateEducation = {
         id: Date.now().toString(),
         ...newEducation,
       };
@@ -238,7 +241,7 @@ const CandidateForm = () => {
 
   const handleAddWorkExperience = () => {
     if (newWorkExperience.company && newWorkExperience.position) {
-      const experienceItem = {
+      const experienceItem: CandidateWorkExperience = {
         id: Date.now().toString(),
         ...newWorkExperience,
       };
@@ -267,40 +270,76 @@ const CandidateForm = () => {
   };
 
   // Обработчик сохранения формы
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
+    setError(null);
 
     // Валидация формы
-    if (!candidate.name) {
+    if (!candidate.name.trim()) {
       setError('Укажите ФИО кандидата');
-      setSaving(false);
       return;
     }
 
-    if (!candidate.position) {
+    if (!candidate.position.trim()) {
       setError('Укажите должность кандидата');
-      setSaving(false);
       return;
     }
 
-    // Имитация отправки данных на сервер
-    setTimeout(() => {
-      console.log('Сохраняем кандидата:', candidate);
-      setSaving(false);
+    try {
+      if (isNewCandidate) {
+        // Создание нового кандидата
+        await createCandidateWithDetails(candidate);
+      } else {
+        // Обновление существующего кандидата
+        const updatedCandidate: CandidateDetailed = {
+          id: id!,
+          ...candidate,
+        };
+        await updateCandidateWithDetails(updatedCandidate);
+      }
+
       setSuccess(true);
 
       // Перенаправление после успешного сохранения
       setTimeout(() => {
         navigate('/app/hr/candidates');
       }, 1500);
-    }, 1000);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Ошибка при сохранении кандидата');
+    }
   };
 
   // Обработчик отмены и возврата к списку
   const handleCancel = () => {
     navigate('/app/hr/candidates');
   };
+
+  const saving = isCreating || isUpdating;
+
+  // Отображение индикатора загрузки
+  if (isLoadingDetails && !isNewCandidate) {
+    return (
+      <Container maxWidth="xl" sx={{ mt: 3, mb: 3 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}
+        >
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
+
+  // Отображение ошибки загрузки
+  if (detailsError && !isNewCandidate) {
+    return (
+      <Container maxWidth="xl" sx={{ mt: 3, mb: 3 }}>
+        <Alert severity="error">{detailsError}</Alert>
+        <Button startIcon={<ArrowBackIcon />} onClick={handleCancel} sx={{ mt: 2 }}>
+          Вернуться к списку кандидатов
+        </Button>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xl" sx={{ mt: 3, mb: 3 }}>
@@ -320,7 +359,7 @@ const CandidateForm = () => {
             disabled={saving}
             sx={{ mr: 1 }}
           >
-            Сохранить
+            {saving ? <CircularProgress size={20} /> : 'Сохранить'}
           </Button>
         </Box>
 
@@ -360,7 +399,7 @@ const CandidateForm = () => {
                         <Select
                           value={candidate.position}
                           label="Должность"
-                          onChange={e => setCandidate({ ...candidate, position: e.target.value })}
+                          onChange={handleSelectChange('position')}
                         >
                           {positions.map(pos => (
                             <MenuItem key={pos} value={pos}>
@@ -387,7 +426,7 @@ const CandidateForm = () => {
                         <Select
                           value={candidate.status}
                           label="Статус"
-                          onChange={handleStatusChange}
+                          onChange={handleSelectChange('status')}
                         >
                           {statuses.map(status => (
                             <MenuItem key={status} value={status}>
@@ -460,11 +499,10 @@ const CandidateForm = () => {
                     Навыки
                   </Typography>
 
-                  <Box sx={{ display: 'flex', mb: 2 }}>
+                  <Box sx={{ display: 'flex', mb: 2, gap: 1 }}>
                     <TextField
-                      label="Добавить навык"
                       fullWidth
-                      size="small"
+                      placeholder="Введите навык"
                       value={newSkill}
                       onChange={e => setNewSkill(e.target.value)}
                       onKeyPress={e => {
@@ -478,19 +516,24 @@ const CandidateForm = () => {
                       variant="contained"
                       onClick={handleAddSkill}
                       disabled={!newSkill}
-                      sx={{ ml: 1 }}
+                      sx={{ minWidth: 'auto', px: 2 }}
                     >
                       <AddIcon />
                     </Button>
                   </Box>
 
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, minHeight: 32 }}>
                     {candidate.skills.map((skill, index) => (
-                      <Chip key={index} label={skill} onDelete={() => handleRemoveSkill(skill)} />
+                      <Chip
+                        key={index}
+                        label={skill}
+                        onDelete={() => handleRemoveSkill(skill)}
+                        size="small"
+                      />
                     ))}
                     {candidate.skills.length === 0 && (
-                      <Typography variant="body2" color="text.secondary">
-                        Нет добавленных навыков
+                      <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
+                        Навыки не добавлены
                       </Typography>
                     )}
                   </Box>
@@ -498,7 +541,6 @@ const CandidateForm = () => {
               </Card>
             </Grid>
 
-            {/* Образование и опыт работы */}
             <Grid item xs={12} md={6}>
               {/* Образование */}
               <Card sx={{ mb: 3 }}>
@@ -734,12 +776,14 @@ const CandidateForm = () => {
                           <DeleteIcon fontSize="small" />
                         </IconButton>
 
-                        <Typography variant="subtitle1">{exp.position}</Typography>
-                        <Typography variant="body2">
-                          {exp.company}, {exp.period}
+                        <Typography variant="subtitle1">
+                          {exp.position} в {exp.company}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {exp.period}
                         </Typography>
                         {exp.description && (
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          <Typography variant="body2" sx={{ mt: 1 }}>
                             {exp.description}
                           </Typography>
                         )}
@@ -757,11 +801,11 @@ const CandidateForm = () => {
           </Grid>
 
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button variant="outlined" onClick={handleCancel}>
+            <Button variant="outlined" onClick={handleCancel} disabled={saving}>
               Отмена
             </Button>
             <Button variant="contained" type="submit" startIcon={<SaveIcon />} disabled={saving}>
-              Сохранить
+              {saving ? <CircularProgress size={20} /> : 'Сохранить'}
             </Button>
           </Box>
         </form>

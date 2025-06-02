@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   Add as AddIcon,
   FilterList as FilterListIcon,
@@ -23,14 +23,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import {
-  mockTests,
-  Test,
-  TestDifficulty,
-  TestStatus,
-  TestTargetAudience,
-  TestType,
-} from '../../../types/test';
+import { useTests } from '../../../features/tests/testsHooks';
+import { TestDifficulty, TestStatus, TestTargetAudience, TestType } from '../../../types/test';
 import TestCard from './TestCard';
 import TestsFilters from './TestsFilters';
 
@@ -40,71 +34,46 @@ const TestsList = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [tests, setTests] = useState<Test[]>(mockTests);
-  const [filteredTests, setFilteredTests] = useState<Test[]>(mockTests);
-  const [filterApplied, setFilterApplied] = useState(false);
+  // Redux hooks
+  const {
+    tests: filteredTests,
+    filters,
+    isLoading,
+    error,
+    loadTests,
+    updateFilters,
+    resetFilters,
+  } = useTests();
 
-  // Быстрые фильтры по целевой аудитории
-  const [quickTargetFilter, setQuickTargetFilter] = useState<TestTargetAudience | 'all'>('all');
-  const [quickStatusFilter, setQuickStatusFilter] = useState<TestStatus | 'all'>('all');
+  // Загружаем тесты при монтировании компонента
+  useEffect(() => {
+    loadTests();
+  }, [loadTests]);
 
-  // Применяем быстрые фильтры и поиск
-  const applyQuickFilters = (testsToFilter: Test[]) => {
-    return testsToFilter.filter(test => {
-      // Фильтр по целевой аудитории
-      if (
-        quickTargetFilter !== 'all' &&
-        test.targetAudience !== quickTargetFilter &&
-        test.targetAudience !== 'both'
-      ) {
-        return false;
-      }
-
-      // Фильтр по статусу
-      if (quickStatusFilter !== 'all' && test.status !== quickStatusFilter) {
-        return false;
-      }
-
-      // Поиск по запросу
-      if (searchQuery.trim() !== '') {
-        const query = searchQuery.toLowerCase();
-        return (
-          test.title.toLowerCase().includes(query) ||
-          test.description.toLowerCase().includes(query) ||
-          (test.department && test.department.toLowerCase().includes(query)) ||
-          (test.position && test.position.toLowerCase().includes(query))
-        );
-      }
-
-      return true;
-    });
-  };
-
-  // Обновляем отфильтрованные тесты при изменении фильтров или поискового запроса
-  useMemo(() => {
-    const newFilteredTests = applyQuickFilters(tests);
-    setFilteredTests(newFilteredTests);
-    setFilterApplied(
-      quickTargetFilter !== 'all' || quickStatusFilter !== 'all' || searchQuery.trim() !== ''
+  // Проверяем, применены ли фильтры
+  const filterApplied = useMemo(() => {
+    return (
+      filters.searchQuery.trim() !== '' ||
+      filters.targetAudience !== 'all' ||
+      filters.status !== 'all' ||
+      filters.type !== 'all' ||
+      filters.difficulty !== 'all' ||
+      filters.department.trim() !== '' ||
+      filters.position.trim() !== ''
     );
-  }, [tests, quickTargetFilter, quickStatusFilter, searchQuery]);
+  }, [filters]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
+    updateFilters({ searchQuery: event.target.value });
   };
 
   const handleFilterClick = () => {
-    setFiltersOpen(true);
-  };
-
-  const handleFilterClose = () => {
-    setFiltersOpen(false);
+    // Открываем панель расширенных фильтров
+    // setFiltersOpen(true);
   };
 
   const handleTestClick = (testId: string) => {
-    navigate(`/app/hr/tests/edit/${testId}`);
+    navigate(`/app/hr/tests/${testId}`);
   };
 
   const handleCreateTest = () => {
@@ -112,70 +81,11 @@ const TestsList = () => {
   };
 
   const clearFilters = () => {
-    setQuickTargetFilter('all');
-    setQuickStatusFilter('all');
-    setSearchQuery('');
-    setFilterApplied(false);
+    resetFilters();
   };
 
-  const applyAdvancedFilters = (filters: any) => {
-    // Здесь будет более сложная логика фильтрации с использованием всех параметров
-    const filtered = mockTests.filter(test => {
-      // Фильтр по целевой аудитории
-      if (filters.targetAudience && filters.targetAudience !== 'all') {
-        if (test.targetAudience !== filters.targetAudience && test.targetAudience !== 'both') {
-          return false;
-        }
-      }
-
-      // Фильтр по статусу
-      if (filters.status && filters.status !== 'all') {
-        if (test.status !== filters.status) {
-          return false;
-        }
-      }
-
-      // Фильтр по типу теста
-      if (filters.type && filters.type !== 'all') {
-        if (test.type !== filters.type) {
-          return false;
-        }
-      }
-
-      // Фильтр по сложности
-      if (filters.difficulty && filters.difficulty !== 'all') {
-        if (test.difficulty !== filters.difficulty) {
-          return false;
-        }
-      }
-
-      // Фильтр по отделу
-      if (filters.department && filters.department !== 'all') {
-        if (!test.department || !test.department.includes(filters.department)) {
-          return false;
-        }
-      }
-
-      // Фильтр по должности
-      if (filters.position && filters.position !== 'all') {
-        if (!test.position || !test.position.includes(filters.position)) {
-          return false;
-        }
-      }
-
-      // Фильтр по времени прохождения
-      if (filters.maxDuration && filters.maxDuration > 0) {
-        if (test.duration > filters.maxDuration) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    setFilteredTests(filtered);
-    setFilterApplied(true);
-    setFiltersOpen(false);
+  const applyAdvancedFilters = (newFilters: any) => {
+    updateFilters(newFilters);
   };
 
   return (
@@ -206,7 +116,7 @@ const TestsList = () => {
             <TextField
               size="small"
               placeholder="Поиск тестов..."
-              value={searchQuery}
+              value={filters.searchQuery}
               onChange={handleSearchChange}
               InputProps={{
                 startAdornment: (
@@ -265,9 +175,11 @@ const TestsList = () => {
             <InputLabel id="target-quick-filter-label">Целевая аудитория</InputLabel>
             <Select
               labelId="target-quick-filter-label"
-              value={quickTargetFilter}
+              value={filters.targetAudience}
               label="Целевая аудитория"
-              onChange={e => setQuickTargetFilter(e.target.value as TestTargetAudience | 'all')}
+              onChange={e =>
+                updateFilters({ targetAudience: e.target.value as TestTargetAudience })
+              }
             >
               <MenuItem value="all">Все</MenuItem>
               <MenuItem value="candidates">Кандидаты</MenuItem>
@@ -280,9 +192,9 @@ const TestsList = () => {
             <InputLabel id="status-quick-filter-label">Статус</InputLabel>
             <Select
               labelId="status-quick-filter-label"
-              value={quickStatusFilter}
+              value={filters.status}
               label="Статус"
-              onChange={e => setQuickStatusFilter(e.target.value as TestStatus | 'all')}
+              onChange={e => updateFilters({ status: e.target.value as TestStatus })}
             >
               <MenuItem value="all">Все статусы</MenuItem>
               <MenuItem value="active">Активный</MenuItem>
@@ -337,8 +249,8 @@ const TestsList = () => {
       {/* Панель расширенных фильтров */}
       <Drawer
         anchor={isMobile ? 'bottom' : 'right'}
-        open={filtersOpen}
-        onClose={handleFilterClose}
+        open={false}
+        onClose={() => {}}
         sx={{
           '& .MuiDrawer-paper': {
             width: { xs: '100%', sm: 400 },
@@ -350,11 +262,7 @@ const TestsList = () => {
           },
         }}
       >
-        <TestsFilters
-          onClose={handleFilterClose}
-          onApply={applyAdvancedFilters}
-          onClear={clearFilters}
-        />
+        <TestsFilters onClose={() => {}} onApply={applyAdvancedFilters} onClear={clearFilters} />
       </Drawer>
     </Container>
   );

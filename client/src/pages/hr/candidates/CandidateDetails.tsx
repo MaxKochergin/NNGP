@@ -1,17 +1,25 @@
 import { useEffect, useState } from 'react';
 import {
+  Add as AddIcon,
   ArrowBack as ArrowBackIcon,
-  CalendarMonth as CalendarMonthIcon,
-  Description as DescriptionIcon,
+  CalendarToday as CalendarIcon,
+  Delete as DeleteIcon,
   Download as DownloadIcon,
   Edit as EditIcon,
-  Event as EventIcon,
+  Email as EmailIcon,
+  ExpandMore as ExpandMoreIcon,
+  LocationOn as LocationIcon,
+  AttachMoney as MoneyIcon,
   Person as PersonIcon,
+  Phone as PhoneIcon,
   School as SchoolIcon,
-  Send as SendIcon,
+  Star as StarIcon,
   Work as WorkIcon,
 } from '@mui/icons-material';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Avatar,
   Box,
@@ -21,409 +29,32 @@ import {
   Chip,
   CircularProgress,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   Grid,
   IconButton,
+  List,
+  ListItem,
+  ListItemSecondaryAction,
+  ListItemText,
   Paper,
   Stack,
   Tab,
   Tabs,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
-
-// Расширенные тестовые данные для кандидатов
-const mockCandidatesDetails = [
-  {
-    id: '1',
-    name: 'Королев Антон Павлович',
-    position: 'Инженер-конструктор',
-    experience: '5 лет',
-    status: 'Новый',
-    lastActivity: '2025-04-15',
-    skills: [
-      'AutoCAD',
-      'Revit',
-      'Железобетонные конструкции',
-      'ЛИРА-САПР',
-      'Нормативная документация',
-    ],
-    avatar: null,
-    email: 'korolev@example.com',
-    phone: '+7 (999) 123-45-67',
-    resumeUrl: '/documents/resume1.pdf',
-    salary: '120 000 руб.',
-    location: 'Москва',
-    education: [
-      {
-        id: '1',
-        degree: 'Магистр',
-        specialty: 'Промышленное и гражданское строительство',
-        university: 'Московский государственный строительный университет',
-        year: '2018',
-        description: 'Специализация: проектирование железобетонных конструкций. Диплом с отличием.',
-      },
-      {
-        id: '2',
-        degree: 'Бакалавр',
-        specialty: 'Строительство',
-        university: 'Московский государственный строительный университет',
-        year: '2016',
-        description: 'Направление: промышленное и гражданское строительство.',
-      },
-    ],
-    workExperience: [
-      {
-        id: '1',
-        company: 'ООО "СтройПроект"',
-        position: 'Инженер-конструктор',
-        period: '2020-2025',
-        description:
-          'Проектирование железобетонных конструкций многоквартирных жилых домов. Расчет конструкций в ЛИРА-САПР. Разработка рабочей документации.',
-      },
-      {
-        id: '2',
-        company: 'ООО "Стройэксперт"',
-        position: 'Техник-проектировщик',
-        period: '2016-2020',
-        description:
-          'Разработка чертежей строительных конструкций. Оформление проектной документации. Помощь ведущим специалистам в расчетах.',
-      },
-    ],
-    notes: [
-      {
-        id: '1',
-        date: '2025-04-15',
-        text: 'Проведено первичное собеседование. Кандидат показал хорошие знания в области проектирования железобетонных конструкций. Предложено пройти тестовое задание.',
-        author: 'Петрова А.С. (HR)',
-      },
-      {
-        id: '2',
-        date: '2025-04-10',
-        text: 'Проведен предварительный отбор резюме. Кандидат соответствует требованиям вакансии. Рекомендовано пригласить на собеседование.',
-        author: 'Смирнов П.Р. (Руководитель отдела)',
-      },
-    ],
-    interviews: [
-      {
-        id: '1',
-        date: '2025-04-15',
-        time: '14:00',
-        type: 'Первичное собеседование',
-        status: 'Проведено',
-        interviewers: ['Петрова А.С.', 'Смирнов П.Р.'],
-        result: 'Успешно',
-        notes: 'Кандидат успешно прошел собеседование. Требуется техническая оценка.',
-      },
-      {
-        id: '2',
-        date: '2025-04-20',
-        time: '11:30',
-        type: 'Техническое интервью',
-        status: 'Запланировано',
-        interviewers: ['Смирнов П.Р.', 'Козлов И.А.'],
-        result: null,
-        notes: '',
-      },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Петрова Анна Сергеевна',
-    position: 'Инженер-проектировщик ОВиК',
-    experience: '5 лет',
-    status: 'На собеседовании',
-    lastActivity: '2025-04-14',
-    skills: [
-      'AutoCAD',
-      'Revit MEP',
-      'Расчет систем вентиляции',
-      'BIM-проектирование',
-      'Нормативная документация',
-    ],
-    avatar: null,
-    email: 'petrova@example.com',
-    phone: '+7 (999) 234-56-78',
-    resumeUrl: '/documents/resume2.pdf',
-    salary: '130 000 руб.',
-    location: 'Москва',
-    education: [
-      {
-        id: '1',
-        degree: 'Магистр',
-        specialty: 'Теплогазоснабжение и вентиляция',
-        university: 'Московский государственный строительный университет',
-        year: '2018',
-        description:
-          'Специализация: проектирование систем отопления, вентиляции и кондиционирования.',
-      },
-    ],
-    workExperience: [
-      {
-        id: '1',
-        company: 'ООО "ИнженерПроект"',
-        position: 'Инженер-проектировщик ОВиК',
-        period: '2020-2025',
-        description:
-          'Проектирование систем отопления, вентиляции и кондиционирования для жилых и общественных зданий. BIM-моделирование инженерных систем.',
-      },
-    ],
-    notes: [
-      {
-        id: '1',
-        date: '2025-04-14',
-        text: 'Проведено первичное собеседование. Кандидат имеет хороший опыт работы с системами ОВиК в жилых комплексах.',
-        author: 'Петрова А.С. (HR)',
-      },
-    ],
-    interviews: [
-      {
-        id: '1',
-        date: '2025-04-14',
-        time: '11:00',
-        type: 'Первичное собеседование',
-        status: 'Проведено',
-        interviewers: ['Петрова А.С.', 'Николаев К.Р.'],
-        result: 'Успешно',
-        notes: 'Кандидат показал хорошие знания. Рекомендован к техническому собеседованию.',
-      },
-      {
-        id: '2',
-        date: '2025-04-21',
-        time: '15:00',
-        type: 'Техническое интервью',
-        status: 'Запланировано',
-        interviewers: ['Николаев К.Р.', 'Смирнова О.В.'],
-        result: null,
-        notes: '',
-      },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Сидоров Алексей Петрович',
-    position: 'Ведущий инженер-конструктор',
-    experience: '5 лет',
-    status: 'Тестовое задание',
-    lastActivity: '2025-04-12',
-    skills: ['ЛИРА-САПР', 'AutoCAD', 'Revit', 'Расчет конструкций', 'Организация проектных работ'],
-    avatar: null,
-    email: 'sidorov@example.com',
-    phone: '+7 (999) 345-67-89',
-    resumeUrl: '/documents/resume3.pdf',
-    salary: '180 000 руб.',
-    location: 'Москва',
-    education: [
-      {
-        id: '1',
-        degree: 'Магистр',
-        specialty: 'Промышленное и гражданское строительство',
-        university: 'Московский государственный строительный университет',
-        year: '2017',
-        description: 'Специализация: проектирование уникальных зданий и сооружений.',
-      },
-    ],
-    workExperience: [
-      {
-        id: '1',
-        company: 'ООО "Стройпроект"',
-        position: 'Инженер-конструктор 1 категории',
-        period: '2020-2025',
-        description:
-          'Разработка конструктивных решений для многоэтажных жилых и общественных зданий. Расчеты зданий на различные воздействия.',
-      },
-      {
-        id: '2',
-        company: 'ООО "СтройконструкцияПроект"',
-        position: 'Инженер-конструктор',
-        period: '2017-2020',
-        description:
-          'Проектирование железобетонных и металлических конструкций. Разработка рабочей документации марки КЖ и КМ.',
-      },
-    ],
-    notes: [
-      {
-        id: '1',
-        date: '2025-04-12',
-        text: 'Кандидату выдано тестовое задание по расчету конструкций многоэтажного здания. Срок выполнения - до 19.04.2025.',
-        author: 'Кузнецов Д.М. (Технический директор)',
-      },
-    ],
-    interviews: [
-      {
-        id: '1',
-        date: '2025-04-10',
-        time: '10:00',
-        type: 'Первичное собеседование',
-        status: 'Проведено',
-        interviewers: ['Петрова А.С.', 'Кузнецов Д.М.'],
-        result: 'Успешно',
-        notes: 'Кандидат имеет хороший опыт. Предложено пройти тестовое задание.',
-      },
-    ],
-  },
-  {
-    id: '4',
-    name: 'Козлова Екатерина Владимировна',
-    position: 'Архитектор',
-    experience: '5 лет',
-    status: 'Принят',
-    lastActivity: '2025-04-10',
-    skills: [
-      'ArchiCAD',
-      'Revit',
-      '3D моделирование',
-      'Adobe Photoshop',
-      'Концептуальное проектирование',
-    ],
-    avatar: null,
-    email: 'kozlova@example.com',
-    phone: '+7 (999) 456-78-90',
-    resumeUrl: '/documents/resume4.pdf',
-    salary: '150 000 руб.',
-    location: 'Москва',
-    education: [
-      {
-        id: '1',
-        degree: 'Магистр',
-        specialty: 'Архитектура',
-        university: 'Московский архитектурный институт',
-        year: '2018',
-        description:
-          'Специализация: проектирование жилых и общественных зданий. Диплом с отличием.',
-      },
-    ],
-    workExperience: [
-      {
-        id: '1',
-        company: 'ООО "АрхПроект"',
-        position: 'Архитектор',
-        period: '2020-2025',
-        description:
-          'Разработка архитектурных концепций и проектной документации для жилых и общественных зданий. Подготовка визуализаций и презентаций проектов.',
-      },
-    ],
-    notes: [
-      {
-        id: '1',
-        date: '2025-04-10',
-        text: 'Кандидат принят на работу с испытательным сроком 3 месяца. Выход - 01.05.2025.',
-        author: 'Петрова А.С. (HR)',
-      },
-      {
-        id: '2',
-        date: '2025-04-05',
-        text: 'Проведено финальное интервью с руководителем архитектурного отдела. Принято решение о найме.',
-        author: 'Соколова Е.В. (Главный архитектор)',
-      },
-    ],
-    interviews: [
-      {
-        id: '1',
-        date: '2025-04-01',
-        time: '14:00',
-        type: 'Первичное собеседование',
-        status: 'Проведено',
-        interviewers: ['Петрова А.С.', 'Соколова Е.В.'],
-        result: 'Успешно',
-        notes: 'Кандидат показал отличные знания и портфолио проектов.',
-      },
-      {
-        id: '2',
-        date: '2025-04-05',
-        time: '16:00',
-        type: 'Финальное интервью',
-        status: 'Проведено',
-        interviewers: ['Соколова Е.В.', 'Васильев П.М.'],
-        result: 'Успешно',
-        notes: 'Принято решение о найме кандидата.',
-      },
-    ],
-  },
-  {
-    id: '5',
-    name: 'Соколов Дмитрий Александрович',
-    position: 'BIM-координатор',
-    experience: '5 лет',
-    status: 'Отклонен',
-    lastActivity: '2025-04-08',
-    skills: ['Revit', 'Navisworks', 'BIM-координация', 'Autodesk BIM 360', 'Dynamo'],
-    avatar: null,
-    email: 'sokolov@example.com',
-    phone: '+7 (999) 567-89-01',
-    resumeUrl: '/documents/resume5.pdf',
-    salary: '160 000 руб.',
-    location: 'Москва',
-    education: [
-      {
-        id: '1',
-        degree: 'Специалист',
-        specialty: 'Информационные системы и технологии',
-        university: 'Московский государственный технический университет',
-        year: '2018',
-        description: 'Специализация: информационное моделирование в строительстве.',
-      },
-    ],
-    workExperience: [
-      {
-        id: '1',
-        company: 'ООО "БИМ-Проект"',
-        position: 'BIM-координатор',
-        period: '2020-2025',
-        description:
-          'Координация BIM-проектов, настройка шаблонов, обучение сотрудников. Выявление коллизий и управление данными проекта.',
-      },
-      {
-        id: '2',
-        company: 'ООО "ПроектСтрой"',
-        position: 'BIM-специалист',
-        period: '2018-2020',
-        description:
-          'Разработка информационных моделей зданий. Подготовка документации на основе BIM-моделей.',
-      },
-    ],
-    notes: [
-      {
-        id: '1',
-        date: '2025-04-08',
-        text: 'Кандидат отклонен. Причина: недостаточный опыт координации междисциплинарных проектов.',
-        author: 'Михайлов В.А. (Руководитель BIM-отдела)',
-      },
-      {
-        id: '2',
-        date: '2025-04-02',
-        text: 'Проведено техническое собеседование. Кандидат хорошо знает Revit, но имеет пробелы в Navisworks и BIM 360.',
-        author: 'Михайлов В.А. (Руководитель BIM-отдела)',
-      },
-    ],
-    interviews: [
-      {
-        id: '1',
-        date: '2025-04-01',
-        time: '11:00',
-        type: 'Первичное собеседование',
-        status: 'Проведено',
-        interviewers: ['Петрова А.С.', 'Михайлов В.А.'],
-        result: 'Условно',
-        notes: 'Кандидат приглашен на техническое собеседование.',
-      },
-      {
-        id: '2',
-        date: '2025-04-02',
-        time: '14:00',
-        type: 'Техническое интервью',
-        status: 'Проведено',
-        interviewers: ['Михайлов В.А.', 'Сергеев А.К.'],
-        result: 'Отклонен',
-        notes: 'Недостаточный опыт для требуемой позиции.',
-      },
-    ],
-  },
-];
-
-// Для обратной совместимости (компонент все еще может использовать эту переменную)
-const mockCandidateDetails = mockCandidatesDetails[0];
+import {
+  useCandidateDetails,
+  useCandidateNotes,
+} from '../../../features/candidates/candidatesHooks';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -442,7 +73,7 @@ const TabPanel = (props: TabPanelProps) => {
       aria-labelledby={`candidate-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
     </div>
   );
 };
@@ -450,28 +81,39 @@ const TabPanel = (props: TabPanelProps) => {
 const CandidateDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Redux hooks
+  const {
+    selectedCandidate: candidate,
+    isLoadingDetails: loading,
+    detailsError: error,
+    isDeleting,
+    loadCandidate,
+    clearSelectedCandidate,
+    updateStatus,
+    deleteCandidateById,
+  } = useCandidateDetails();
+
+  const { addCandidateNote } = useCandidateNotes();
+
+  // Локальное состояние
   const [tabValue, setTabValue] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [candidate, setCandidate] = useState(mockCandidateDetails);
   const [newNote, setNewNote] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Имитация загрузки данных
+  // Загружаем кандидата при монтировании компонента
   useEffect(() => {
-    setLoading(true);
+    if (id) {
+      loadCandidate(id);
+    }
 
-    // Имитация API-запроса
-    setTimeout(() => {
-      const foundCandidate = mockCandidatesDetails.find(c => c.id === id);
-      if (foundCandidate) {
-        setCandidate(foundCandidate);
-        setError(null);
-      } else {
-        setError('Кандидат не найден');
-      }
-      setLoading(false);
-    }, 1000);
-  }, [id]);
+    // Очищаем выбранного кандидата при размонтировании
+    return () => {
+      clearSelectedCandidate();
+    };
+  }, [id, loadCandidate, clearSelectedCandidate]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -485,21 +127,38 @@ const CandidateDetails = () => {
     navigate(`/app/hr/candidates/${id}/edit`);
   };
 
+  const handleDelete = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (id) {
+      try {
+        await deleteCandidateById(id);
+        setDeleteDialogOpen(false);
+        // Перенаправляем на список кандидатов после успешного удаления
+        navigate('/app/hr/candidates');
+      } catch (error) {
+        console.error('Ошибка при удалении кандидата:', error);
+        // Здесь можно добавить уведомление об ошибке
+      }
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+  };
+
   const handleAddNote = () => {
-    if (newNote.trim()) {
-      const newNoteItem = {
-        id: Date.now().toString(),
-        date: new Date().toISOString().split('T')[0],
-        text: newNote,
-        author: 'Вы (HR)',
-      };
-
-      setCandidate({
-        ...candidate,
-        notes: [newNoteItem, ...candidate.notes],
-      });
-
+    if (newNote.trim() && id) {
+      addCandidateNote(id, newNote.trim(), 'HR Специалист');
       setNewNote('');
+    }
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    if (id) {
+      updateStatus(id, newStatus);
     }
   };
 
@@ -511,6 +170,15 @@ const CandidateDetails = () => {
       month: '2-digit',
       year: 'numeric',
     });
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   // Отображение индикатора загрузки
@@ -531,6 +199,18 @@ const CandidateDetails = () => {
     return (
       <Container maxWidth="xl" sx={{ mt: 3, mb: 3 }}>
         <Alert severity="error">{error}</Alert>
+        <Button startIcon={<ArrowBackIcon />} onClick={handleBack} sx={{ mt: 2 }}>
+          Вернуться к списку кандидатов
+        </Button>
+      </Container>
+    );
+  }
+
+  // Если кандидат не найден
+  if (!candidate) {
+    return (
+      <Container maxWidth="xl" sx={{ mt: 3, mb: 3 }}>
+        <Alert severity="warning">Кандидат не найден</Alert>
         <Button startIcon={<ArrowBackIcon />} onClick={handleBack} sx={{ mt: 2 }}>
           Вернуться к списку кандидатов
         </Button>
@@ -559,16 +239,53 @@ const CandidateDetails = () => {
     <Container maxWidth="xl" sx={{ mt: 3, mb: 3 }}>
       <Paper sx={{ p: { xs: 2, sm: 3 } }}>
         {/* Заголовок и кнопки */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <IconButton onClick={handleBack} sx={{ mr: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h4" component="h1" sx={{ flexGrow: 1 }}>
-            Профиль кандидата
-          </Typography>
-          <Button variant="contained" startIcon={<EditIcon />} onClick={handleEdit} sx={{ mr: 1 }}>
-            Редактировать
-          </Button>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+            <IconButton onClick={handleBack} sx={{ mr: 2 }}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{
+                fontSize: { xs: '1.5rem', sm: '2rem' },
+                fontWeight: 'bold',
+                color: 'primary.main',
+              }}
+            >
+              Профиль кандидата
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+            <Button
+              variant="outlined"
+              startIcon={<DeleteIcon />}
+              onClick={handleDelete}
+              disabled={isDeleting}
+              color="error"
+              size={isMobile ? 'medium' : 'large'}
+              sx={{ flex: { xs: 1, sm: 'none' } }}
+            >
+              {isDeleting ? <CircularProgress size={20} /> : 'Удалить'}
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<EditIcon />}
+              onClick={handleEdit}
+              size={isMobile ? 'medium' : 'large'}
+              sx={{ flex: { xs: 1, sm: 'none' } }}
+            >
+              Редактировать
+            </Button>
+          </Box>
         </Box>
 
         <Divider sx={{ mb: 3 }} />
@@ -576,19 +293,36 @@ const CandidateDetails = () => {
         {/* Основная информация */}
         <Grid container spacing={3}>
           <Grid item xs={12} md={4}>
-            <Card sx={{ mb: 3 }}>
+            <Card sx={{ mb: 3, height: 'fit-content' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
                   <Avatar
                     src={candidate.avatar || undefined}
-                    sx={{ width: 120, height: 120, mb: 2 }}
+                    sx={{
+                      width: { xs: 100, sm: 120 },
+                      height: { xs: 100, sm: 120 },
+                      mb: 2,
+                      fontSize: '2rem',
+                      fontWeight: 'bold',
+                      bgcolor: theme.palette.primary.main,
+                    }}
                   >
-                    <PersonIcon sx={{ fontSize: 60 }} />
+                    {!candidate.avatar && getInitials(candidate.name)}
                   </Avatar>
-                  <Typography variant="h5" component="div" align="center">
+                  <Typography
+                    variant="h5"
+                    component="div"
+                    align="center"
+                    sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
+                  >
                     {candidate.name}
                   </Typography>
-                  <Typography variant="subtitle1" color="text.secondary" align="center">
+                  <Typography
+                    variant="subtitle1"
+                    color="text.secondary"
+                    align="center"
+                    sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                  >
                     {candidate.position}
                   </Typography>
                   <Chip
@@ -605,24 +339,33 @@ const CandidateDetails = () => {
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                       Контакты
                     </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}
-                    >
-                      Email: {candidate.email}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}
-                    >
-                      Телефон: {candidate.phone}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}
-                    >
-                      Город: {candidate.location}
-                    </Typography>
+                    {candidate.email && (
+                      <Typography
+                        variant="body2"
+                        sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}
+                      >
+                        <EmailIcon sx={{ mr: 1, fontSize: '1rem' }} />
+                        {candidate.email}
+                      </Typography>
+                    )}
+                    {candidate.phone && (
+                      <Typography
+                        variant="body2"
+                        sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}
+                      >
+                        <PhoneIcon sx={{ mr: 1, fontSize: '1rem' }} />
+                        {candidate.phone}
+                      </Typography>
+                    )}
+                    {candidate.location && (
+                      <Typography
+                        variant="body2"
+                        sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}
+                      >
+                        <LocationIcon sx={{ mr: 1, fontSize: '1rem' }} />
+                        {candidate.location}
+                      </Typography>
+                    )}
                   </Box>
 
                   <Box>
@@ -633,13 +376,24 @@ const CandidateDetails = () => {
                       variant="body2"
                       sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}
                     >
-                      Опыт работы: {candidate.experience}
+                      <WorkIcon sx={{ mr: 1, fontSize: '1rem' }} />
+                      Опыт: {candidate.experience}
                     </Typography>
+                    {candidate.salary && (
+                      <Typography
+                        variant="body2"
+                        sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}
+                      >
+                        <MoneyIcon sx={{ mr: 1, fontSize: '1rem' }} />
+                        {candidate.salary}
+                      </Typography>
+                    )}
                     <Typography
                       variant="body2"
                       sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}
                     >
-                      Ожидаемая зарплата: {candidate.salary}
+                      <CalendarIcon sx={{ mr: 1, fontSize: '1rem' }} />
+                      Активность: {formatDate(candidate.lastActivity)}
                     </Typography>
                   </Box>
 
@@ -647,61 +401,30 @@ const CandidateDetails = () => {
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                       Навыки
                     </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {candidate.skills.map((skill, index) => (
-                        <Chip key={index} label={skill} size="small" variant="outlined" />
+                        <Chip
+                          key={index}
+                          label={skill}
+                          size="small"
+                          variant="outlined"
+                          sx={{ fontSize: '0.75rem' }}
+                        />
                       ))}
                     </Box>
                   </Box>
 
-                  <Box sx={{ mt: 1 }}>
+                  {candidate.resumeUrl && (
                     <Button
                       variant="outlined"
                       startIcon={<DownloadIcon />}
                       fullWidth
-                      sx={{ mb: 1 }}
+                      onClick={() => window.open(candidate.resumeUrl, '_blank')}
                     >
                       Скачать резюме
                     </Button>
-                    <Button variant="contained" startIcon={<SendIcon />} fullWidth>
-                      Отправить приглашение
-                    </Button>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Ближайшие собеседования
-                </Typography>
-                <Stack spacing={2}>
-                  {candidate.interviews
-                    .filter(interview => interview.status === 'Запланировано')
-                    .map(interview => (
-                      <Box key={interview.id} sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                        <CalendarMonthIcon color="primary" sx={{ mr: 1, mt: 0.3 }} />
-                        <Box>
-                          <Typography variant="subtitle2">
-                            {interview.type} - {formatDate(interview.date)}, {interview.time}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Интервьюеры: {interview.interviewers.join(', ')}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    ))}
-                  {candidate.interviews.filter(interview => interview.status === 'Запланировано')
-                    .length === 0 && (
-                    <Typography variant="body2" color="text.secondary">
-                      Нет запланированных собеседований
-                    </Typography>
                   )}
                 </Stack>
-                <Button variant="text" sx={{ mt: 2 }}>
-                  Запланировать собеседование
-                </Button>
               </CardContent>
             </Card>
           </Grid>
@@ -711,167 +434,235 @@ const CandidateDetails = () => {
               <Tabs
                 value={tabValue}
                 onChange={handleTabChange}
-                variant="scrollable"
+                variant={isMobile ? 'scrollable' : 'standard'}
                 scrollButtons="auto"
+                allowScrollButtonsMobile
               >
-                <Tab icon={<WorkIcon />} label="Опыт работы" />
-                <Tab icon={<SchoolIcon />} label="Образование" />
-                <Tab icon={<DescriptionIcon />} label="Заметки" />
-                <Tab icon={<EventIcon />} label="Собеседования" />
+                <Tab label="Образование" />
+                <Tab label="Опыт работы" />
+                <Tab label="Интервью" />
+                <Tab label="Заметки" />
               </Tabs>
             </Box>
 
+            {/* Вкладка "Образование" */}
             <TabPanel value={tabValue} index={0}>
-              <Stack spacing={2}>
-                {candidate.workExperience.map(exp => (
-                  <Card key={exp.id} variant="outlined">
-                    <CardContent>
-                      <Typography variant="h6">{exp.position}</Typography>
-                      <Typography variant="subtitle1" color="text.secondary">
-                        {exp.company}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        {exp.period}
-                      </Typography>
-                      <Typography variant="body1">{exp.description}</Typography>
-                    </CardContent>
-                  </Card>
-                ))}
-                {candidate.workExperience.length === 0 && (
-                  <Typography color="text.secondary">Нет данных об опыте работы</Typography>
-                )}
-              </Stack>
+              <Typography variant="h6" gutterBottom>
+                Образование
+              </Typography>
+              {candidate.education && candidate.education.length > 0 ? (
+                <Stack spacing={2}>
+                  {candidate.education.map(edu => (
+                    <Card key={edu.id} variant="outlined">
+                      <CardContent>
+                        <Typography variant="h6" component="div">
+                          {edu.degree} - {edu.specialty}
+                        </Typography>
+                        <Typography color="text.secondary" gutterBottom>
+                          {edu.university} • {edu.year}
+                        </Typography>
+                        {edu.description && (
+                          <Typography variant="body2">{edu.description}</Typography>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Stack>
+              ) : (
+                <Typography color="text.secondary">Информация об образовании не указана</Typography>
+              )}
             </TabPanel>
 
+            {/* Вкладка "Опыт работы" */}
             <TabPanel value={tabValue} index={1}>
-              <Stack spacing={2}>
-                {candidate.education.map(edu => (
-                  <Card key={edu.id} variant="outlined">
-                    <CardContent>
-                      <Typography variant="h6">
-                        {edu.degree}, {edu.specialty}
-                      </Typography>
-                      <Typography variant="subtitle1">{edu.university}</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        Год окончания: {edu.year}
-                      </Typography>
-                      {edu.description && (
-                        <Typography variant="body1">{edu.description}</Typography>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-                {candidate.education.length === 0 && (
-                  <Typography color="text.secondary">Нет данных об образовании</Typography>
-                )}
-              </Stack>
+              <Typography variant="h6" gutterBottom>
+                Опыт работы
+              </Typography>
+              {candidate.workExperience && candidate.workExperience.length > 0 ? (
+                <Stack spacing={2}>
+                  {candidate.workExperience.map(work => (
+                    <Card key={work.id} variant="outlined">
+                      <CardContent>
+                        <Typography variant="h6" component="div">
+                          {work.position}
+                        </Typography>
+                        <Typography color="text.secondary" gutterBottom>
+                          {work.company} • {work.period}
+                        </Typography>
+                        <Typography variant="body2">{work.description}</Typography>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Stack>
+              ) : (
+                <Typography color="text.secondary">
+                  Информация об опыте работы не указана
+                </Typography>
+              )}
             </TabPanel>
 
+            {/* Вкладка "Интервью" */}
             <TabPanel value={tabValue} index={2}>
-              <Box sx={{ mb: 3 }}>
-                <TextField
-                  label="Добавить заметку"
-                  multiline
-                  rows={3}
-                  fullWidth
-                  value={newNote}
-                  onChange={e => setNewNote(e.target.value)}
-                  sx={{ mb: 1 }}
-                />
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button variant="contained" onClick={handleAddNote} disabled={!newNote.trim()}>
-                    Сохранить заметку
-                  </Button>
-                </Box>
-              </Box>
-
-              <Divider sx={{ mb: 3 }} />
-
-              <Stack spacing={2}>
-                {candidate.notes.map(note => (
-                  <Card key={note.id} variant="outlined">
-                    <CardContent>
-                      <Typography
-                        variant="subtitle2"
-                        color="text.secondary"
-                        sx={{ mb: 1, display: 'flex', justifyContent: 'space-between' }}
-                      >
-                        <span>{formatDate(note.date)}</span>
-                        <span>{note.author}</span>
-                      </Typography>
-                      <Typography variant="body1">{note.text}</Typography>
-                    </CardContent>
-                  </Card>
-                ))}
-                {candidate.notes.length === 0 && (
-                  <Typography color="text.secondary">Нет заметок</Typography>
-                )}
-              </Stack>
+              <Typography variant="h6" gutterBottom>
+                История интервью
+              </Typography>
+              {candidate.interviews && candidate.interviews.length > 0 ? (
+                <Stack spacing={2}>
+                  {candidate.interviews.map(interview => (
+                    <Card key={interview.id} variant="outlined">
+                      <CardContent>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            mb: 1,
+                          }}
+                        >
+                          <Typography variant="h6" component="div">
+                            {interview.type}
+                          </Typography>
+                          <Chip
+                            label={interview.status}
+                            color={
+                              interview.status === 'Пройдено'
+                                ? 'success'
+                                : interview.status === 'Запланировано'
+                                  ? 'warning'
+                                  : 'default'
+                            }
+                            size="small"
+                          />
+                        </Box>
+                        <Typography color="text.secondary" gutterBottom>
+                          {formatDate(interview.date)} • {interview.interviewer}
+                        </Typography>
+                        {interview.feedback && (
+                          <Typography variant="body2">
+                            <strong>Обратная связь:</strong> {interview.feedback}
+                          </Typography>
+                        )}
+                        {interview.rating && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                            <Typography variant="body2" sx={{ mr: 1 }}>
+                              Оценка:
+                            </Typography>
+                            {[...Array(5)].map((_, i) => (
+                              <StarIcon
+                                key={i}
+                                sx={{
+                                  color: i < interview.rating! ? 'warning.main' : 'action.disabled',
+                                  fontSize: '1rem',
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Stack>
+              ) : (
+                <Typography color="text.secondary">Интервью еще не проводились</Typography>
+              )}
             </TabPanel>
 
+            {/* Вкладка "Заметки" */}
             <TabPanel value={tabValue} index={3}>
-              <Stack spacing={2}>
-                {candidate.interviews.map(interview => (
-                  <Card
-                    key={interview.id}
-                    variant="outlined"
-                    sx={{
-                      borderLeft: '4px solid',
-                      borderLeftColor:
-                        interview.status === 'Проведено'
-                          ? 'success.main'
-                          : interview.status === 'Запланировано'
-                            ? 'warning.main'
-                            : 'error.main',
-                    }}
+              <Typography variant="h6" gutterBottom>
+                Заметки
+              </Typography>
+
+              {/* Форма добавления заметки */}
+              <Card variant="outlined" sx={{ mb: 3 }}>
+                <CardContent>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Добавить заметку
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    placeholder="Введите заметку о кандидате..."
+                    value={newNote}
+                    onChange={e => setNewNote(e.target.value)}
+                    sx={{ mb: 2 }}
+                  />
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleAddNote}
+                    disabled={!newNote.trim()}
                   >
-                    <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="h6">{interview.type}</Typography>
-                        <Chip
-                          label={interview.status}
-                          color={
-                            interview.status === 'Проведено'
-                              ? 'success'
-                              : interview.status === 'Запланировано'
-                                ? 'warning'
-                                : 'error'
-                          }
-                          size="small"
-                        />
-                      </Box>
-                      <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                        {formatDate(interview.date)}, {interview.time}
-                      </Typography>
-                      <Typography variant="body2" gutterBottom>
-                        Интервьюеры: {interview.interviewers.join(', ')}
-                      </Typography>
+                    Добавить заметку
+                  </Button>
+                </CardContent>
+              </Card>
 
-                      {interview.result && (
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant="subtitle2">Результат: {interview.result}</Typography>
+              {/* Список заметок */}
+              {candidate.notes && candidate.notes.length > 0 ? (
+                <Stack spacing={2}>
+                  {candidate.notes.map(note => (
+                    <Card key={note.id} variant="outlined">
+                      <CardContent>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            mb: 1,
+                          }}
+                        >
+                          <Typography variant="subtitle2" color="text.secondary">
+                            {note.author}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatDate(note.date)}
+                          </Typography>
                         </Box>
-                      )}
-
-                      {interview.notes && (
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant="body2">{interview.notes}</Typography>
-                        </Box>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-                {candidate.interviews.length === 0 && (
-                  <Typography color="text.secondary">Нет данных о собеседованиях</Typography>
-                )}
-                <Box sx={{ mt: 2 }}>
-                  <Button variant="outlined">Запланировать собеседование</Button>
-                </Box>
-              </Stack>
+                        <Typography variant="body2">{note.text}</Typography>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Stack>
+              ) : (
+                <Typography color="text.secondary">Заметок пока нет</Typography>
+              )}
             </TabPanel>
           </Grid>
         </Grid>
       </Paper>
+
+      {/* Диалог подтверждения удаления */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">Подтверждение удаления</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Вы уверены, что хотите удалить кандидата <strong>{candidate?.name}</strong>? Это
+            действие нельзя отменить. Все данные кандидата, включая заметки и интервью, будут
+            удалены.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} disabled={isDeleting}>
+            Отмена
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={isDeleting}
+            startIcon={isDeleting ? <CircularProgress size={16} /> : <DeleteIcon />}
+          >
+            {isDeleting ? 'Удаление...' : 'Удалить'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
