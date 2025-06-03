@@ -383,47 +383,43 @@ const Notifications = () => {
           </Alert>
         )}
 
-        <Box
+        {/* Вкладки для фильтрации уведомлений */}
+        <Tabs
+          value={currentTab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           sx={{
+            mb: 2,
             borderBottom: 1,
             borderColor: 'divider',
-            mb: 2,
+            '& .MuiTabs-scrollButtons': {
+              '&.Mui-disabled': {
+                opacity: 0.3,
+              },
+            },
+            '& .MuiTab-root': {
+              minWidth: { xs: 100, sm: 'auto' },
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+            },
           }}
         >
-          <Tabs
-            value={currentTab}
-            onChange={handleTabChange}
-            variant="scrollable"
-            scrollButtons="auto"
-            aria-label="Вкладки уведомлений"
-          >
-            <Tab
-              label={
-                <Badge
-                  badgeContent={notifications.length}
-                  color="primary"
-                  sx={{ '& .MuiBadge-badge': { right: -15 } }}
-                >
-                  Все
-                </Badge>
-              }
-            />
-            <Tab
-              label={
-                <Badge
-                  badgeContent={notifications.filter(notification => !notification.isRead).length}
-                  color="error"
-                  sx={{ '& .MuiBadge-badge': { right: -15 } }}
-                >
-                  Непрочитанные
-                </Badge>
-              }
-            />
-            <Tab label="Безопасность" />
-            <Tab label="Пользователи" />
-            <Tab label="Система" />
-          </Tabs>
-        </Box>
+          <Tab label="Все" />
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                Непрочитанные
+                {unreadCount > 0 && (
+                  <Badge badgeContent={unreadCount} color="error" sx={{ ml: 1 }} />
+                )}
+              </Box>
+            }
+          />
+          <Tab label="Безопасность" />
+          <Tab label="Система" />
+          <Tab label="Обновления" />
+        </Tabs>
 
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>

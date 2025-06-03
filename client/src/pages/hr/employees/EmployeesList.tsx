@@ -4,11 +4,13 @@ import {
   Clear as ClearIcon,
   Delete as DeleteIcon,
   FilterList as FilterListIcon,
+  Person as PersonIcon,
   Refresh as RefreshIcon,
   Search as SearchIcon,
 } from '@mui/icons-material';
 import {
   Alert,
+  Badge,
   Box,
   Button,
   Chip,
@@ -43,6 +45,8 @@ const EmployeesList = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const isXSmall = useMediaQuery('(max-width:320px)');
 
   // Состояние для диалога удаления
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -93,7 +97,7 @@ const EmployeesList = () => {
   };
 
   const handleDeleteEmployee = (employeeId: string) => {
-    const employee = filteredEmployees.find(e => e.id === employeeId);
+    const employee = filteredEmployees?.find(e => e.id === employeeId);
     if (employee) {
       setEmployeeToDelete(employee);
       setDeleteDialogOpen(true);
@@ -128,6 +132,7 @@ const EmployeesList = () => {
 
   const getGridColumns = () => {
     if (isMobile) return { xs: 12 };
+    if (isTablet) return { xs: 12, sm: 6 };
     return { xs: 12, sm: 6, md: 4, lg: 3, xl: 3 };
   };
 
@@ -135,16 +140,22 @@ const EmployeesList = () => {
     <Container
       maxWidth="xl"
       sx={{
-        mt: { xs: 2, sm: 3 },
-        mb: { xs: 2, sm: 3 },
-        px: { xs: 2, sm: 3 },
+        mt: { xs: 1, sm: 2, md: 3 },
+        mb: { xs: 7, sm: 3 }, // Увеличиваем отступ снизу для FAB на мобильных
+        px: { xs: 1, sm: 2, md: 3 },
       }}
     >
       <Paper
         sx={{
-          p: { xs: 2, sm: 3 },
-          borderRadius: 2,
+          p: { xs: 1.5, sm: 2, md: 3 },
+          borderRadius: { xs: 1, sm: 2 },
           minHeight: '70vh',
+          background: {
+            xs: theme => theme.palette.background.paper,
+            sm: theme =>
+              `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
+          },
+          boxShadow: { xs: 1, sm: 2 },
         }}
       >
         {/* Заголовок */}
@@ -158,367 +169,292 @@ const EmployeesList = () => {
               gap: { xs: 1, sm: 2 },
             }}
           >
-            <Typography
-              variant="h4"
-              component="h1"
+            <Box
               sx={{
-                fontSize: {
-                  xs: '1.7rem',
-                  sm: '2rem',
-                  md: '2.125rem',
-                },
-                fontWeight: 'bold',
-                color: 'primary.main',
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 1,
+                width: { xs: '100%', sm: 'auto' },
               }}
             >
-              Сотрудники
+              <Typography
+                variant="h4"
+                component="h1"
+                sx={{
+                  fontSize: {
+                    xs: '1.5rem',
+                    sm: '1.8rem',
+                    md: '2rem',
+                  },
+                  fontWeight: 'bold',
+                  color: 'primary.main',
+                }}
+              >
+                Сотрудники
+              </Typography>
+
               {activeFiltersCount > 0 && (
-                <Chip
-                  label={`Фильтры: ${activeFiltersCount}`}
-                  size="small"
+                <Badge
+                  badgeContent={activeFiltersCount}
                   color="primary"
-                  onDelete={clearAllFilters}
                   sx={{
-                    ml: { xs: 0, sm: 2 },
-                    mt: { xs: 1, sm: 0 },
-                    verticalAlign: { xs: 'baseline', sm: 'middle' },
-                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                  }}
-                />
-              )}
-            </Typography>
-
-            {/* Кнопка обновления */}
-            <IconButton
-              onClick={refreshEmployees}
-              disabled={isLoading}
-              sx={{
-                display: { xs: 'flex', sm: 'none' },
-                alignSelf: 'flex-end',
-              }}
-            >
-              {isLoading ? <CircularProgress size={20} /> : <RefreshIcon />}
-            </IconButton>
-          </Box>
-
-          {/* Статистика */}
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              mt: 1,
-              fontSize: { xs: '0.75rem', sm: '0.875rem' },
-            }}
-          >
-            Всего сотрудников: {statistics?.total || 0} • Показано: {filteredEmployees.length}
-            {lastUpdated && <> • Обновлено: {new Date(lastUpdated).toLocaleTimeString()}</>}
-          </Typography>
-        </Box>
-
-        {/* Поиск и фильтры */}
-        <Box sx={{ mb: { xs: 2, sm: 3 } }}>
-          {/* Мобильная версия поиска */}
-          {isMobile ? (
-            <Stack spacing={2}>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Поиск сотрудников..."
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: searchQuery && (
-                      <InputAdornment position="end">
-                        <IconButton size="small" onClick={clearSearch} sx={{ p: 0.5 }}>
-                          <ClearIcon sx={{ fontSize: 16 }} />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    '& .MuiInputBase-input': {
-                      fontSize: { xs: '0.875rem', sm: '1rem' },
-                      py: { xs: 1, sm: 1.5 },
+                    '& .MuiBadge-badge': {
+                      fontSize: '0.7rem',
+                      height: 18,
+                      minWidth: 18,
                     },
                   }}
-                />
-                <Button
-                  variant="outlined"
-                  startIcon={<FilterListIcon />}
-                  onClick={() => toggleFiltersOpen(true)}
-                  sx={{
-                    minWidth: { xs: 'auto', sm: 120 },
-                    px: { xs: 1.5, sm: 2 },
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  }}
                 >
-                  Фильтры
-                  {activeFiltersCount > 0 && (
-                    <Chip
-                      label={activeFiltersCount}
-                      size="small"
-                      sx={{ ml: 1, height: 16, fontSize: '0.6rem' }}
-                    />
-                  )}
-                </Button>
-              </Box>
+                  <Chip
+                    label="Фильтры"
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    onDelete={clearAllFilters}
+                    sx={{
+                      fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                      height: { xs: 24, sm: 28 },
+                    }}
+                  />
+                </Badge>
+              )}
+            </Box>
 
+            {/* Панель действий для десктопа */}
+            {!isMobile && (
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={handleAddEmployee}
-                  fullWidth
-                  sx={{
-                    py: { xs: 1, sm: 1.5 },
-                    fontSize: { xs: '0.875rem', sm: '1rem' },
-                  }}
-                >
-                  Добавить сотрудника
-                </Button>
-                <Button
                   variant="outlined"
-                  startIcon={isLoading ? <CircularProgress size={16} /> : <RefreshIcon />}
+                  startIcon={<RefreshIcon />}
                   onClick={refreshEmployees}
-                  disabled={isLoading}
-                  sx={{
-                    minWidth: { xs: 'auto', sm: 120 },
-                    px: { xs: 1.5, sm: 2 },
-                  }}
+                  size={isTablet ? 'small' : 'medium'}
                 >
                   Обновить
                 </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddEmployee}
+                  size={isTablet ? 'small' : 'medium'}
+                >
+                  Добавить сотрудника
+                </Button>
               </Box>
-            </Stack>
-          ) : (
-            /* Десктопная версия поиска */
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-              <TextField
-                size="small"
-                placeholder="Поиск сотрудников..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                  endAdornment: searchQuery && (
-                    <InputAdornment position="end">
-                      <IconButton size="small" onClick={clearSearch}>
-                        <ClearIcon />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
+            )}
+          </Box>
+
+          {/* Строка поиска и фильтров */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: 'center',
+              gap: { xs: 1, sm: 2 },
+              mt: { xs: 1.5, sm: 2 },
+              width: '100%',
+            }}
+          >
+            {/* Поле поиска */}
+            <TextField
+              placeholder="Поиск сотрудников..."
+              variant="outlined"
+              fullWidth
+              size={isMobile ? 'small' : 'medium'}
+              value={searchQuery}
+              onChange={handleSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize={isMobile ? 'small' : 'medium'} />
+                  </InputAdornment>
+                ),
+                endAdornment: searchQuery ? (
+                  <InputAdornment position="end">
+                    <IconButton
+                      size={isMobile ? 'small' : 'medium'}
+                      onClick={clearSearch}
+                      edge="end"
+                      aria-label="clear search"
+                    >
+                      <ClearIcon fontSize={isMobile ? 'small' : 'medium'} />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
+                sx: {
+                  borderRadius: { xs: 1, sm: 1.5 },
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                },
+              }}
+              sx={{
+                flexGrow: 1,
+                maxWidth: { sm: '60%', md: '50%' },
+              }}
+            />
+
+            {/* Кнопка фильтров */}
+            <Button
+              variant={activeFiltersCount > 0 ? 'contained' : 'outlined'}
+              color={activeFiltersCount > 0 ? 'primary' : 'inherit'}
+              startIcon={<FilterListIcon />}
+              onClick={toggleFiltersOpen}
+              size={isMobile ? 'small' : 'medium'}
+              sx={{
+                minWidth: { xs: '100%', sm: 'auto' },
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+              }}
+            >
+              {isMobile ? 'Фильтры' : 'Фильтровать список'}
+              {activeFiltersCount > 0 && !isMobile && ` (${activeFiltersCount})`}
+            </Button>
+          </Box>
+        </Box>
+
+        {/* Основное содержимое */}
+        <Box sx={{ mt: { xs: 2, sm: 3 } }}>
+          {isLoading ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <CircularProgress size={isMobile ? 32 : 40} />
+              <Typography sx={{ mt: 2 }}>Загрузка сотрудников...</Typography>
+            </Box>
+          ) : error ? (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          ) : filteredEmployees && filteredEmployees.length > 0 ? (
+            <>
+              {/* Информация о результатах */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: { xs: 1.5, sm: 2 },
                 }}
-                sx={{ width: { sm: 240, md: 300, lg: 400 } }}
-              />
-              <Button
-                variant="outlined"
-                startIcon={<FilterListIcon />}
-                onClick={() => toggleFiltersOpen(true)}
               >
-                Фильтры
-                {activeFiltersCount > 0 && (
-                  <Chip
-                    label={activeFiltersCount}
-                    size="small"
-                    sx={{ ml: 1, height: 20, fontSize: '0.7rem' }}
-                  />
-                )}
-              </Button>
-              <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddEmployee}>
-                Добавить
-              </Button>
-              <IconButton onClick={refreshEmployees} disabled={isLoading} title="Обновить список">
-                {isLoading ? <CircularProgress size={20} /> : <RefreshIcon />}
-              </IconButton>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                >
+                  {filteredEmployees.length === statistics?.total
+                    ? `Всего сотрудников: ${filteredEmployees.length}`
+                    : `Показано ${filteredEmployees.length} из ${statistics?.total || 0} сотрудников`}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                    display: { xs: 'none', sm: 'block' },
+                  }}
+                >
+                  Последнее обновление:{' '}
+                  {lastUpdated ? new Date(lastUpdated).toLocaleString() : 'Н/Д'}
+                </Typography>
+              </Box>
+
+              {/* Сетка сотрудников */}
+              <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }}>
+                {filteredEmployees.map(employee => (
+                  <Grid item key={employee.id} {...getGridColumns()}>
+                    <EmployeeCard
+                      employee={employee}
+                      onClick={() => handleEmployeeClick(employee.id)}
+                      onDelete={handleDeleteEmployee}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <PersonIcon sx={{ fontSize: 60, color: 'text.secondary', opacity: 0.5, mb: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                Сотрудники не найдены
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {searchQuery || activeFiltersCount > 0
+                  ? 'Попробуйте изменить параметры поиска или фильтры'
+                  : 'Добавьте первого сотрудника, нажав на кнопку "Добавить сотрудника"'}
+              </Typography>
+              {(searchQuery || activeFiltersCount > 0) && (
+                <Button variant="outlined" onClick={clearAllFilters} startIcon={<ClearIcon />}>
+                  Сбросить все фильтры
+                </Button>
+              )}
             </Box>
           )}
         </Box>
-
-        {/* Ошибка загрузки */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {/* Список сотрудников */}
-        {isLoading && filteredEmployees.length === 0 ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : filteredEmployees.length > 0 ? (
-          <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
-            {filteredEmployees.map((employee: EmployeeBasicInfo) => (
-              <Grid item {...getGridColumns()} key={employee.id}>
-                <EmployeeCard
-                  employee={employee}
-                  onClick={() => handleEmployeeClick(employee.id)}
-                  onDelete={handleDeleteEmployee}
-                />
-              </Grid>
-            ))}
-          </Grid>
-        ) : (
-          <Box
-            sx={{
-              textAlign: 'center',
-              py: { xs: 4, sm: 6 },
-              px: { xs: 2, sm: 4 },
-            }}
-          >
-            <Typography
-              variant="h6"
-              color="text.secondary"
-              sx={{
-                mb: 2,
-                fontSize: { xs: '1rem', sm: '1.25rem' },
-              }}
-            >
-              {searchQuery || activeFiltersCount > 0
-                ? 'Сотрудники не найдены'
-                : 'Список сотрудников пуст'}
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                mb: 3,
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-              }}
-            >
-              {searchQuery || activeFiltersCount > 0
-                ? 'Попробуйте изменить критерии поиска или фильтры'
-                : 'Добавьте первого сотрудника в систему'}
-            </Typography>
-            {searchQuery || activeFiltersCount > 0 ? (
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  clearSearchQuery();
-                  clearAllFilters();
-                }}
-                sx={{ mr: 2 }}
-              >
-                Сбросить фильтры
-              </Button>
-            ) : null}
-            <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddEmployee}>
-              Добавить сотрудника
-            </Button>
-          </Box>
-        )}
-
-        {/* Фильтры в Drawer */}
-        {isMobile ? (
-          <SwipeableDrawer
-            anchor="bottom"
-            open={filtersOpen}
-            onClose={() => toggleFiltersOpen(false)}
-            onOpen={() => toggleFiltersOpen(true)}
-            disableSwipeToOpen={false}
-            ModalProps={{
-              keepMounted: true,
-            }}
-            sx={{
-              '& .MuiDrawer-paper': {
-                borderTopLeftRadius: 16,
-                borderTopRightRadius: 16,
-                maxHeight: '80vh',
-              },
-            }}
-          >
-            <Box sx={{ p: 2 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Фильтры
-              </Typography>
-              <EmployeeFilters
-                onApplyFilters={applyFilters}
-                onClearFilters={clearAllFilters}
-                currentFilters={filters}
-              />
-            </Box>
-          </SwipeableDrawer>
-        ) : (
-          <Drawer
-            anchor="right"
-            open={filtersOpen}
-            onClose={() => toggleFiltersOpen(false)}
-            sx={{
-              '& .MuiDrawer-paper': {
-                width: 320,
-                p: 3,
-              },
-            }}
-          >
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Фильтры
-            </Typography>
-            <EmployeeFilters
-              onApplyFilters={applyFilters}
-              onClearFilters={clearAllFilters}
-              currentFilters={filters}
-            />
-          </Drawer>
-        )}
-
-        {/* FAB для мобильных устройств */}
-        {isMobile && (
-          <Fab
-            color="primary"
-            aria-label="add"
-            onClick={handleAddEmployee}
-            sx={{
-              position: 'fixed',
-              bottom: { xs: 16, sm: 24 },
-              right: { xs: 16, sm: 24 },
-              zIndex: 1000,
-            }}
-          >
-            <AddIcon />
-          </Fab>
-        )}
-
-        {/* Диалог подтверждения удаления */}
-        <Dialog
-          open={deleteDialogOpen}
-          onClose={handleDeleteCancel}
-          aria-labelledby="delete-dialog-title"
-          aria-describedby="delete-dialog-description"
-        >
-          <DialogTitle id="delete-dialog-title">Подтверждение удаления</DialogTitle>
-          <DialogContent>
-            <DialogContentText id="delete-dialog-description">
-              Вы уверены, что хотите удалить сотрудника <strong>{employeeToDelete?.name}</strong>?
-              Это действие нельзя отменить. Все данные сотрудника, включая заметки и оценки, будут
-              удалены.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDeleteCancel} disabled={isDeleting}>
-              Отмена
-            </Button>
-            <Button
-              onClick={handleDeleteConfirm}
-              autoFocus
-              color="error"
-              disabled={isDeleting}
-              startIcon={isDeleting ? <CircularProgress size={16} /> : <DeleteIcon />}
-            >
-              {isDeleting ? 'Удаление...' : 'Удалить'}
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Paper>
+
+      {/* Панель фильтров (боковая) */}
+      <SwipeableDrawer
+        anchor={isMobile ? 'bottom' : 'right'}
+        open={filtersOpen}
+        onClose={toggleFiltersOpen}
+        onOpen={toggleFiltersOpen}
+        PaperProps={{
+          sx: {
+            width: isMobile ? '100%' : 350,
+            maxWidth: '100%',
+            borderTopLeftRadius: isMobile ? 16 : 0,
+            borderTopRightRadius: isMobile ? 16 : 0,
+            maxHeight: isMobile ? '90vh' : '100%',
+          },
+        }}
+      >
+        <EmployeeFilters
+          filters={filters}
+          onApply={applyFilters}
+          onClose={toggleFiltersOpen}
+          onClear={clearAllFilters}
+        />
+      </SwipeableDrawer>
+
+      {/* Диалог подтверждения удаления */}
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel} fullWidth maxWidth="xs">
+        <DialogTitle>Удаление сотрудника</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Вы действительно хотите удалить сотрудника <strong>{employeeToDelete?.name}</strong>?
+            <br />
+            Это действие нельзя отменить.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} disabled={isDeleting}>
+            Отмена
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={isDeleting}
+            startIcon={isDeleting ? <CircularProgress size={16} /> : undefined}
+          >
+            {isDeleting ? 'Удаление...' : 'Удалить'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Плавающая кнопка добавления для мобильных устройств */}
+      {isMobile && (
+        <Fab
+          color="primary"
+          aria-label="add employee"
+          sx={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+            zIndex: theme => theme.zIndex.drawer - 1,
+          }}
+          onClick={handleAddEmployee}
+        >
+          <AddIcon />
+        </Fab>
+      )}
     </Container>
   );
 };

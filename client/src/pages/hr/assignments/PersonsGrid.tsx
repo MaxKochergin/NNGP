@@ -12,6 +12,8 @@ import {
   Select,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { AssignmentType, PersonType } from './AssignmentDashboard';
 import PersonCard from './PersonCard';
@@ -104,6 +106,10 @@ interface PersonsGridProps {
 }
 
 const PersonsGrid = ({ personType, onAssign }: PersonsGridProps) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+
   // Получаем соответствующие данные в зависимости от выбранного типа
   const [persons, setPersons] = useState<any[]>([]);
 
@@ -164,15 +170,24 @@ const PersonsGrid = ({ personType, onAssign }: PersonsGridProps) => {
   const isFiltered =
     searchQuery || departmentFilter !== 'Все отделы' || positionFilter !== 'Все должности';
 
+  // Определяем адаптивные колонки для сетки
+  const getGridColumns = () => {
+    if (isMobile) return { xs: 12 };
+    if (isTablet) return { xs: 12, sm: 6, md: 6 };
+    return { xs: 12, sm: 6, md: 4, lg: 3 };
+  };
+
   return (
-    <Box>
-      {/* Фильтры */}
-      <Box sx={{ mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={4}>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+      {/* Поиск и фильтры */}
+      <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+        <Grid container spacing={{ xs: 1.5, sm: 2 }}>
+          {/* Поиск */}
+          <Grid item xs={12} sm={12} md={6}>
             <TextField
               fullWidth
-              placeholder="Поиск по ФИО"
+              size={isMobile ? 'small' : 'medium'}
+              placeholder={`Поиск ${personType === 'employee' ? 'сотрудников' : 'кандидатов'}...`}
               value={searchQuery}
               onChange={handleSearchChange}
               InputProps={{
@@ -182,51 +197,75 @@ const PersonsGrid = ({ personType, onAssign }: PersonsGridProps) => {
                   </InputAdornment>
                 ),
               }}
-              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: { xs: 1, sm: 1.5 },
+                  bgcolor: 'background.paper',
+                },
+              }}
             />
           </Grid>
 
+          {/* Фильтры */}
           {personType === 'employee' && (
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel id="department-filter-label">Отдел</InputLabel>
-                <Select
-                  labelId="department-filter-label"
-                  value={departmentFilter}
-                  label="Отдел"
-                  onChange={handleDepartmentChange}
-                >
-                  {departments.map(dept => (
-                    <MenuItem key={dept} value={dept}>
-                      {dept}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+            <>
+              <Grid item xs={12} sm={6} md={3}>
+                <FormControl fullWidth size={isMobile ? 'small' : 'medium'}>
+                  <InputLabel id="department-filter-label">Отдел</InputLabel>
+                  <Select
+                    labelId="department-filter-label"
+                    value={departmentFilter}
+                    label="Отдел"
+                    onChange={handleDepartmentChange}
+                    sx={{
+                      borderRadius: { xs: 1, sm: 1.5 },
+                    }}
+                  >
+                    {departments.map(dept => (
+                      <MenuItem key={dept} value={dept}>
+                        {dept}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <FormControl fullWidth size={isMobile ? 'small' : 'medium'}>
+                  <InputLabel id="position-filter-label">Должность</InputLabel>
+                  <Select
+                    labelId="position-filter-label"
+                    value={positionFilter}
+                    label="Должность"
+                    onChange={handlePositionChange}
+                    sx={{
+                      borderRadius: { xs: 1, sm: 1.5 },
+                    }}
+                  >
+                    {positions.map(pos => (
+                      <MenuItem key={pos} value={pos}>
+                        {pos}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </>
           )}
 
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel id="position-filter-label">Должность</InputLabel>
-              <Select
-                labelId="position-filter-label"
-                value={positionFilter}
-                label="Должность"
-                onChange={handlePositionChange}
-              >
-                {positions.map(pos => (
-                  <MenuItem key={pos} value={pos}>
-                    {pos}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
+          {/* Кнопка сброса фильтров */}
           {isFiltered && (
-            <Grid item xs={12} sm={6} md={2}>
-              <Button fullWidth variant="outlined" onClick={handleClearFilters}>
+            <Grid item xs={12} sm={isTablet ? 12 : 'auto'}>
+              <Button
+                fullWidth={isMobile || isTablet}
+                variant="outlined"
+                onClick={handleClearFilters}
+                size={isMobile ? 'small' : 'medium'}
+                sx={{
+                  borderRadius: { xs: 1, sm: 1.5 },
+                  py: { xs: 1, sm: 1.5 },
+                }}
+              >
                 Сбросить фильтры
               </Button>
             </Grid>
@@ -236,9 +275,24 @@ const PersonsGrid = ({ personType, onAssign }: PersonsGridProps) => {
 
       {/* Результаты фильтрации */}
       {isFiltered && (
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle1">
-            Найдено: {filteredPersons.length}{' '}
+        <Box
+          sx={{
+            mb: { xs: 2, sm: 3 },
+            p: { xs: 1.5, sm: 2 },
+            bgcolor: 'background.default',
+            borderRadius: { xs: 1, sm: 1.5 },
+            border: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Typography
+            variant={isMobile ? 'body2' : 'subtitle1'}
+            sx={{
+              fontSize: { xs: '0.9rem', sm: '1rem' },
+              fontWeight: 'medium',
+            }}
+          >
+            Найдено: <strong>{filteredPersons.length}</strong>{' '}
             {personType === 'employee' ? 'сотрудников' : 'кандидатов'}
             {isFiltered && (
               <Chip
@@ -246,7 +300,11 @@ const PersonsGrid = ({ personType, onAssign }: PersonsGridProps) => {
                 size="small"
                 color="primary"
                 onDelete={handleClearFilters}
-                sx={{ ml: 2 }}
+                sx={{
+                  ml: { xs: 1, sm: 2 },
+                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                  height: { xs: 22, sm: 24 },
+                }}
               />
             )}
           </Typography>
@@ -255,19 +313,47 @@ const PersonsGrid = ({ personType, onAssign }: PersonsGridProps) => {
 
       {/* Сетка с карточками */}
       {filteredPersons.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 5 }}>
-          <Typography variant="h6" color="text.secondary">
+        <Box
+          sx={{
+            textAlign: 'center',
+            py: { xs: 4, sm: 6 },
+            px: { xs: 2, sm: 4 },
+          }}
+        >
+          <Typography
+            variant="h6"
+            color="text.secondary"
+            sx={{
+              fontSize: { xs: '1rem', sm: '1.25rem' },
+              mb: 1,
+            }}
+          >
             {personType === 'employee' ? 'Сотрудники' : 'Кандидаты'} не найдены
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              mt: 1,
+              fontSize: { xs: '0.85rem', sm: '0.9rem' },
+            }}
+          >
             Попробуйте изменить параметры поиска или фильтрации
           </Typography>
         </Box>
       ) : (
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
           {filteredPersons.map(person => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={person.id}>
-              <PersonCard person={person} personType={personType} onAssign={onAssign} />
+            <Grid item {...getGridColumns()} key={person.id}>
+              <PersonCard
+                person={person}
+                personType={personType}
+                onAssign={onAssign}
+                sx={{
+                  height: '100%',
+                  minHeight: { xs: 200, sm: 220, md: 240 },
+                }}
+              />
             </Grid>
           ))}
         </Grid>

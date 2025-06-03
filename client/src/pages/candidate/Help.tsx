@@ -286,26 +286,47 @@ const Help = () => {
           <Tabs
             value={tabValue}
             onChange={handleTabChange}
-            variant={isMobile ? 'fullWidth' : 'standard'}
+            variant={isMobile ? 'scrollable' : 'standard'}
+            scrollButtons={isMobile ? 'auto' : false}
+            allowScrollButtonsMobile
             aria-label="разделы помощи"
+            sx={{
+              '& .MuiTabs-scrollButtons': {
+                '&.Mui-disabled': {
+                  opacity: 0.3,
+                },
+              },
+            }}
           >
             <Tab
               icon={<QuestionAnswerIcon />}
               iconPosition="start"
-              label={isMobile ? '' : 'Часто задаваемые вопросы'}
+              label={isMobile ? 'FAQ' : 'Часто задаваемые вопросы'}
               {...a11yProps(0)}
+              sx={{
+                minWidth: isMobile ? 120 : 'auto',
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+              }}
             />
             <Tab
               icon={<ComputerIcon />}
               iconPosition="start"
-              label={isMobile ? '' : 'Инструкции'}
+              label={isMobile ? 'Инструкции' : 'Инструкции'}
               {...a11yProps(1)}
+              sx={{
+                minWidth: isMobile ? 120 : 'auto',
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+              }}
             />
             <Tab
               icon={<MailIcon />}
               iconPosition="start"
-              label={isMobile ? '' : 'Контакты'}
+              label={isMobile ? 'Контакты' : 'Контакты'}
               {...a11yProps(2)}
+              sx={{
+                minWidth: isMobile ? 120 : 'auto',
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+              }}
             />
           </Tabs>
         </Box>

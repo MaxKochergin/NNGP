@@ -318,26 +318,47 @@ const Settings = () => {
           <Tabs
             value={tabValue}
             onChange={handleTabChange}
-            variant={isMobile ? 'fullWidth' : 'standard'}
+            variant={isMobile ? 'scrollable' : 'standard'}
+            scrollButtons={isMobile ? 'auto' : false}
+            allowScrollButtonsMobile
             aria-label="настройки аккаунта"
+            sx={{
+              '& .MuiTabs-scrollButtons': {
+                '&.Mui-disabled': {
+                  opacity: 0.3,
+                },
+              },
+            }}
           >
             <Tab
               icon={<PersonIcon />}
               iconPosition="start"
-              label={isMobile ? '' : 'Основные'}
+              label={isMobile ? 'Основные' : 'Основные'}
               {...a11yProps(0)}
+              sx={{
+                minWidth: isMobile ? 120 : 'auto',
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+              }}
             />
             <Tab
               icon={<LockIcon />}
               iconPosition="start"
-              label={isMobile ? '' : 'Безопасность'}
+              label={isMobile ? 'Безопасность' : 'Безопасность'}
               {...a11yProps(1)}
+              sx={{
+                minWidth: isMobile ? 120 : 'auto',
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+              }}
             />
             <Tab
               icon={<NotificationsIcon />}
               iconPosition="start"
-              label={isMobile ? '' : 'Уведомления'}
+              label={isMobile ? 'Уведомления' : 'Уведомления'}
               {...a11yProps(2)}
+              sx={{
+                minWidth: isMobile ? 120 : 'auto',
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+              }}
             />
           </Tabs>
         </Box>

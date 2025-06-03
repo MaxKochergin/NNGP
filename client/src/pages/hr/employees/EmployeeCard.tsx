@@ -17,9 +17,10 @@ import { Employee } from './EmployeesList';
 interface EmployeeCardProps {
   employee: Employee;
   onClick: () => void;
+  onDelete?: (employeeId: string) => void;
 }
 
-const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
+const EmployeeCard = ({ employee, onClick, onDelete }: EmployeeCardProps) => {
   const theme = useTheme();
 
   // Расширенные breakpoints для лучшей адаптивности
@@ -50,6 +51,13 @@ const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+    if (isMobile) {
+      return date.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+      });
+    }
     return date.toLocaleDateString('ru-RU', {
       day: '2-digit',
       month: '2-digit',
@@ -68,8 +76,39 @@ const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
 
   // Сокращаем длинные названия для маленьких экранов
   const truncateText = (text: string, maxLength: number) => {
+    if (!text) return '';
     if (text.length <= maxLength) return text;
     return `${text.substring(0, maxLength)}...`;
+  };
+
+  // Сокращаем имя для мобильных
+  const getDisplayName = (name: string) => {
+    if (!name) return '';
+    if (!isMobile) return name;
+
+    const parts = name.split(' ');
+    if (parts.length >= 3) {
+      return `${parts[0]} ${parts[1].charAt(0)}.${parts[2] ? ` ${parts[2].charAt(0)}.` : ''}`;
+    } else if (parts.length === 2 && isXSmall) {
+      return `${parts[0]} ${parts[1].charAt(0)}.`;
+    }
+    return name;
+  };
+
+  // Добавляем обработчик для быстрого звонка на мобильных
+  const handlePhoneClick = (event: React.MouseEvent, phone: string) => {
+    if (isMobile) {
+      event.stopPropagation();
+      window.location.href = `tel:${phone.replace(/[^\d+]/g, '')}`;
+    }
+  };
+
+  // Добавляем обработчик для быстрой отправки email на мобильных
+  const handleEmailClick = (event: React.MouseEvent, email: string) => {
+    if (isMobile) {
+      event.stopPropagation();
+      window.location.href = `mailto:${email}`;
+    }
   };
 
   return (
@@ -84,8 +123,8 @@ const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           transform: 'translateY(0)',
           '&:hover': {
-            transform: 'translateY(-4px)',
-            boxShadow: theme.shadows[8],
+            transform: { xs: 'translateY(-2px)', sm: 'translateY(-4px)' },
+            boxShadow: { xs: theme.shadows[4], sm: theme.shadows[8] },
             '& .employee-avatar': {
               transform: 'scale(1.05)',
             },
@@ -94,34 +133,40 @@ const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
             },
           },
           '&:active': {
-            transform: 'translateY(-2px)',
+            transform: 'translateY(-1px)',
             transition: 'all 0.1s ease',
           },
           position: 'relative',
           overflow: 'hidden',
           borderRadius: {
-            xs: isXSmall ? 1 : isVerySmall ? 1.5 : 2,
+            xs: 2,
             sm: 2,
             md: 3,
           },
           border: `1px solid ${theme.palette.divider}`,
           minHeight: {
-            xs: isXSmall ? 200 : isVerySmall ? 220 : 240,
-            sm: 260,
-            md: 280,
-            lg: 300,
+            xs: 150, // Уменьшаем минимальную высоту для мобильных
+            sm: 220,
+            md: 260,
+            lg: 280,
           },
           // Touch-friendly минимальный размер
-          minWidth: { xs: 280, sm: 'auto' },
+          minWidth: { xs: '100%', sm: 'auto' }, // На мобильных занимаем всю ширину
+          // Градиентная тень для более современного вида
+          background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
+          boxShadow: {
+            xs: theme.shadows[2],
+            sm: theme.shadows[3],
+          },
         }}
         onClick={onClick}
       >
         <CardContent
           sx={{
             p: {
-              xs: isXSmall ? 1.5 : isVerySmall ? 2 : 2.5,
-              sm: 3,
-              md: 3.5,
+              xs: isXSmall ? 1.25 : 1.75, // Уменьшаем отступы для очень маленьких экранов
+              sm: 2.5,
+              md: 3,
             },
             pb: '16px !important',
             flexGrow: 1,
@@ -137,11 +182,11 @@ const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
               sx={{
                 display: 'flex',
                 alignItems: 'flex-start',
-                mb: { xs: 1.5, sm: 2 },
+                mb: { xs: 1, sm: 2 }, // Уменьшаем отступ для мобильных
                 minHeight: {
-                  xs: isXSmall ? 50 : isVerySmall ? 55 : 60,
-                  sm: 65,
-                  md: 70,
+                  xs: 45, // Уменьшаем для мобильных
+                  sm: 60,
+                  md: 65,
                 },
               }}
             >
@@ -150,272 +195,247 @@ const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
                 className="employee-avatar"
                 sx={{
                   width: {
-                    xs: isXSmall ? 40 : isVerySmall ? 45 : 50,
-                    sm: 55,
-                    md: 60,
+                    xs: isXSmall ? 36 : 40, // Меньший размер для очень маленьких экранов
+                    sm: 50,
+                    md: 56,
                   },
                   height: {
-                    xs: isXSmall ? 40 : isVerySmall ? 45 : 50,
-                    sm: 55,
-                    md: 60,
+                    xs: isXSmall ? 36 : 40,
+                    sm: 50,
+                    md: 56,
                   },
-                  mr: { xs: 1.5, sm: 2 },
                   bgcolor: theme.palette.primary.main,
-                  flexShrink: 0,
+                  color: theme.palette.primary.contrastText,
                   fontSize: {
-                    xs: isXSmall ? '0.9rem' : isVerySmall ? '1rem' : '1.1rem',
-                    sm: '1.2rem',
-                    md: '1.3rem',
+                    xs: isXSmall ? '0.9rem' : '1rem',
+                    sm: '1.25rem',
+                    md: '1.5rem',
                   },
                   fontWeight: 'bold',
                   transition: 'transform 0.3s ease',
+                  flexShrink: 0,
+                  mr: { xs: 1.5, sm: 2 },
+                  border: `2px solid ${theme.palette.background.paper}`,
                   boxShadow: theme.shadows[2],
                 }}
               >
-                {!employee.avatar && getInitials(employee.name)}
+                {!employee.avatar && getInitials(employee.name || '')}
               </Avatar>
 
-              <Box sx={{ flexGrow: 1, overflow: 'hidden', minWidth: 0 }}>
-                <Tooltip title={employee.name} placement="top" arrow>
-                  <Typography
-                    variant="h6"
-                    component="div"
-                    className="employee-name"
-                    sx={{
-                      fontSize: {
-                        xs: isXSmall ? '0.85rem' : isVerySmall ? '0.9rem' : '0.95rem',
-                        sm: '1rem',
-                        md: '1.1rem',
-                      },
-                      fontWeight: 'bold',
-                      lineHeight: 1.3,
-                      mb: 0.5,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      transition: 'color 0.3s ease',
-                      wordBreak: 'break-word',
-                    }}
-                  >
-                    {isXSmall ? truncateText(employee.name, 20) : employee.name}
-                  </Typography>
-                </Tooltip>
+              <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                <Typography
+                  variant="h6"
+                  className="employee-name"
+                  sx={{
+                    fontWeight: 'bold',
+                    fontSize: {
+                      xs: isXSmall ? '0.85rem' : '0.95rem',
+                      sm: '1.1rem',
+                      md: '1.25rem',
+                    },
+                    lineHeight: {
+                      xs: 1.2,
+                      sm: 1.3,
+                    },
+                    mb: { xs: 0.5, sm: 0.75 },
+                    transition: 'color 0.3s ease',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {getDisplayName(employee.name || '')}
+                </Typography>
 
-                <Tooltip title={employee.position} placement="top" arrow>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{
-                      fontSize: {
-                        xs: isXSmall ? '0.7rem' : isVerySmall ? '0.75rem' : '0.8rem',
-                        sm: '0.85rem',
-                        md: '0.9rem',
-                      },
-                      lineHeight: 1.4,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      wordBreak: 'break-word',
-                    }}
-                  >
-                    {isXSmall ? truncateText(employee.position, 25) : employee.position}
-                  </Typography>
-                </Tooltip>
+                <Chip
+                  label={employee.status || 'Статус не указан'}
+                  color={getStatusColor(employee.status || '') as any}
+                  size={isMobile ? 'small' : 'medium'}
+                  sx={{
+                    fontSize: {
+                      xs: isXSmall ? '0.65rem' : '0.7rem',
+                      sm: '0.75rem',
+                    },
+                    height: {
+                      xs: isXSmall ? 20 : 24,
+                      sm: 28,
+                    },
+                    '& .MuiChip-label': {
+                      px: { xs: 0.75, sm: 1 },
+                    },
+                  }}
+                />
               </Box>
             </Box>
 
             {/* Статус и отдел */}
-            <Box sx={{ mb: { xs: 1.5, sm: 2 } }}>
+            <Box sx={{ mb: { xs: 1, sm: 2 } }}>
               <Stack
-                direction={isXSmall ? 'column' : 'row'}
-                spacing={isXSmall ? 0.5 : 1}
-                sx={{
-                  flexWrap: 'wrap',
-                  gap: 0.5,
-                  alignItems: isXSmall ? 'flex-start' : 'center',
-                }}
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={{ xs: 0.5, sm: 1 }}
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
               >
-                <Chip
-                  label={employee.status}
-                  color={getStatusColor(employee.status)}
-                  size="small"
-                  sx={{
-                    height: { xs: 22, sm: 24, md: 26 },
-                    fontSize: {
-                      xs: isXSmall ? '0.65rem' : '0.7rem',
-                      sm: '0.75rem',
-                      md: '0.8rem',
-                    },
-                    fontWeight: 'medium',
-                    '& .MuiChip-label': {
-                      px: { xs: 1, sm: 1.5 },
-                    },
-                  }}
-                />
                 <Tooltip title={employee.department} placement="top" arrow>
-                  <Chip
-                    label={
-                      isXSmall
-                        ? truncateText(employee.department, 15)
-                        : isVerySmall
-                          ? truncateText(employee.department, 20)
-                          : employee.department
-                    }
-                    variant="outlined"
-                    size="small"
+                  <Box
                     sx={{
-                      height: { xs: 22, sm: 24, md: 26 },
-                      fontSize: {
-                        xs: isXSmall ? '0.65rem' : '0.7rem',
-                        sm: '0.75rem',
-                        md: '0.8rem',
-                      },
-                      maxWidth: '100%',
-                      '& .MuiChip-label': {
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      color: 'text.secondary',
+                    }}
+                  >
+                    <Work sx={{ fontSize: { xs: isXSmall ? 10 : 12, sm: 14 } }} />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontSize: {
+                          xs: isXSmall ? '0.6rem' : '0.65rem',
+                          sm: '0.7rem',
+                          md: '0.75rem',
+                        },
+                        fontWeight: 'medium',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        px: { xs: 1, sm: 1.5 },
-                      },
-                    }}
-                  />
+                        whiteSpace: 'nowrap',
+                        maxWidth: { xs: isXSmall ? 100 : 120, sm: 'none' },
+                      }}
+                    >
+                      {isMobile
+                        ? truncateText(employee.department, isXSmall ? 12 : 15)
+                        : employee.department}
+                    </Typography>
+                  </Box>
                 </Tooltip>
               </Stack>
             </Box>
 
-            {/* Опыт работы */}
-            <Box sx={{ mb: { xs: 1.5, sm: 2 } }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Work
-                  sx={{
-                    fontSize: { xs: 14, sm: 16, md: 18 },
-                    color: 'text.secondary',
-                  }}
-                />
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{
-                    fontSize: {
-                      xs: isXSmall ? '0.7rem' : '0.75rem',
-                      sm: '0.8rem',
-                      md: '0.85rem',
-                    },
-                    fontWeight: 'medium',
-                  }}
-                >
-                  Опыт: {employee.experience}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Навыки */}
-            <Box sx={{ mb: { xs: 1, sm: 1.5 } }}>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  mb: 1,
-                  fontSize: {
-                    xs: isXSmall ? '0.7rem' : '0.75rem',
-                    sm: '0.8rem',
-                    md: '0.85rem',
-                  },
-                  fontWeight: 'medium',
-                }}
-              >
-                Навыки:
-              </Typography>
-
+            {/* Контактная информация для мобильных */}
+            {isMobile && employee.phone && (
               <Box
                 sx={{
                   display: 'flex',
-                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  mb: 1,
                   gap: 0.5,
-                  minHeight: {
-                    xs: isXSmall ? 45 : 50,
-                    sm: 55,
-                    md: 60,
+                  color: theme.palette.primary.main,
+                  '&:active': {
+                    opacity: 0.7,
                   },
-                  overflow: 'hidden',
                 }}
+                onClick={e => handlePhoneClick(e, employee.phone)}
               >
-                {employee.skills
-                  .slice(0, isXSmall ? 2 : isVerySmall ? 3 : 4)
-                  .map((skill, index) => (
-                    <Tooltip key={index} title={skill} placement="top" arrow>
-                      <Chip
-                        label={
-                          isXSmall
-                            ? truncateText(skill, 8)
-                            : isVerySmall
-                              ? truncateText(skill, 12)
-                              : skill
-                        }
-                        size="small"
-                        variant="outlined"
-                        sx={{
-                          fontSize: {
-                            xs: isXSmall ? '0.6rem' : '0.65rem',
-                            sm: '0.7rem',
-                            md: '0.75rem',
-                          },
-                          height: { xs: 20, sm: 22, md: 24 },
-                          maxWidth: '100%',
-                          '& .MuiChip-label': {
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            px: { xs: 0.5, sm: 1 },
-                          },
-                          bgcolor: 'background.paper',
-                          borderColor: 'primary.light',
-                          '&:hover': {
-                            bgcolor: 'primary.lighter',
-                            borderColor: 'primary.main',
-                          },
-                        }}
-                      />
-                    </Tooltip>
-                  ))}
-                {employee.skills.length > (isXSmall ? 2 : isVerySmall ? 3 : 4) && (
-                  <Chip
-                    label={`+${employee.skills.length - (isXSmall ? 2 : isVerySmall ? 3 : 4)}`}
-                    size="small"
+                <Phone sx={{ fontSize: isXSmall ? 14 : 16 }} />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: isXSmall ? '0.65rem' : '0.7rem',
+                    fontWeight: 'medium',
+                  }}
+                >
+                  {employee.phone}
+                </Typography>
+              </Box>
+            )}
+
+            {/* Навыки - показываем меньше на мобильных */}
+            {employee.skills && employee.skills.length > 0 && (
+              <Box sx={{ mb: { xs: 1, sm: 1.5 } }}>
+                {!isXSmall && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
                     sx={{
+                      mb: 0.5,
                       fontSize: {
-                        xs: isXSmall ? '0.6rem' : '0.65rem',
+                        xs: '0.65rem',
                         sm: '0.7rem',
                         md: '0.75rem',
                       },
-                      height: { xs: 20, sm: 22, md: 24 },
-                      bgcolor: 'primary.main',
-                      color: 'primary.contrastText',
-                      '& .MuiChip-label': {
-                        px: { xs: 0.5, sm: 1 },
-                      },
+                      fontWeight: 'medium',
+                      display: 'block',
                     }}
-                  />
+                  >
+                    Навыки:
+                  </Typography>
                 )}
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 0.5,
+                    minHeight: {
+                      xs: isXSmall ? 20 : 30, // Уменьшаем для мобильных
+                      sm: 45,
+                      md: 50,
+                    },
+                    overflow: 'hidden',
+                  }}
+                >
+                  {employee.skills.slice(0, isXSmall ? 2 : isMobile ? 3 : 4).map((skill, index) => (
+                    <Chip
+                      key={index}
+                      label={skill}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        fontSize: {
+                          xs: isXSmall ? '0.55rem' : '0.6rem',
+                          sm: '0.65rem',
+                          md: '0.7rem',
+                        },
+                        height: { xs: isXSmall ? 16 : 18, sm: 20, md: 22 },
+                        backgroundColor: theme.palette.background.paper,
+                        borderColor: theme.palette.primary.light,
+                        color: theme.palette.primary.main,
+                        '& .MuiChip-label': {
+                          px: { xs: 0.5, sm: 1 },
+                        },
+                      }}
+                    />
+                  ))}
+
+                  {employee.skills.length > (isXSmall ? 2 : isMobile ? 3 : 4) && (
+                    <Chip
+                      label={`+${employee.skills.length - (isXSmall ? 2 : isMobile ? 3 : 4)}`}
+                      size="small"
+                      sx={{
+                        fontSize: {
+                          xs: isXSmall ? '0.55rem' : '0.6rem',
+                          sm: '0.65rem',
+                          md: '0.7rem',
+                        },
+                        height: { xs: isXSmall ? 16 : 18, sm: 20, md: 22 },
+                        bgcolor: theme.palette.primary.main,
+                        color: 'white',
+                        fontWeight: 'bold',
+                        '& .MuiChip-label': {
+                          px: { xs: 0.5, sm: 1 },
+                        },
+                      }}
+                    />
+                  )}
+                </Box>
               </Box>
-            </Box>
+            )}
           </Box>
 
           {/* Дата приема (внизу) */}
           <Box
             sx={{
               mt: 'auto',
-              pt: { xs: 1, sm: 1.5 },
+              pt: { xs: 0.5, sm: 1.5 },
               borderTop: '1px solid',
               borderColor: 'divider',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <CalendarToday
                 sx={{
-                  fontSize: { xs: 12, sm: 14, md: 16 },
+                  fontSize: { xs: isXSmall ? 10 : 12, sm: 14, md: 16 },
                   color: 'text.secondary',
                 }}
               />
@@ -424,16 +444,33 @@ const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
                 color="text.secondary"
                 sx={{
                   fontSize: {
-                    xs: isXSmall ? '0.65rem' : '0.7rem',
-                    sm: '0.75rem',
-                    md: '0.8rem',
+                    xs: isXSmall ? '0.6rem' : '0.65rem',
+                    sm: '0.7rem',
+                    md: '0.75rem',
                   },
                   fontWeight: 'medium',
                 }}
               >
-                Принят: {formatDate(employee.hireDate)}
+                {isXSmall
+                  ? formatDate(employee.hireDate).substring(0, 5)
+                  : formatDate(employee.hireDate)}
               </Typography>
             </Box>
+
+            {/* Добавляем индикатор свайпа для мобильных */}
+            {isMobile && (
+              <Typography
+                variant="caption"
+                sx={{
+                  fontSize: isXSmall ? '0.55rem' : '0.6rem',
+                  color: 'text.disabled',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                нажмите для деталей
+              </Typography>
+            )}
           </Box>
         </CardContent>
 
@@ -441,20 +478,32 @@ const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
         <Box
           sx={{
             position: 'absolute',
-            top: { xs: 8, sm: 12 },
-            right: { xs: 8, sm: 12 },
-            width: { xs: 8, sm: 10 },
-            height: { xs: 8, sm: 10 },
+            top: { xs: 12, sm: 16 },
+            right: { xs: 12, sm: 16 },
+            width: { xs: isXSmall ? 6 : 8, sm: 10 },
+            height: { xs: isXSmall ? 6 : 8, sm: 10 },
             borderRadius: '50%',
             bgcolor:
-              employee.status === 'Работает'
+              employee.status.toLowerCase() === 'работает'
                 ? 'success.main'
-                : employee.status === 'Отпуск'
+                : employee.status.toLowerCase() === 'отпуск'
                   ? 'info.main'
-                  : employee.status === 'Больничный'
+                  : employee.status.toLowerCase() === 'больничный'
                     ? 'warning.main'
                     : 'grey.400',
             boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+            animation: employee.status.toLowerCase() === 'работает' ? 'pulse 2s infinite' : 'none',
+            '@keyframes pulse': {
+              '0%': {
+                opacity: 1,
+              },
+              '50%': {
+                opacity: 0.7,
+              },
+              '100%': {
+                opacity: 1,
+              },
+            },
           }}
         />
       </Card>

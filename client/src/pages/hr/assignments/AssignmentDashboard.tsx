@@ -1,8 +1,13 @@
 import { useState } from 'react';
+import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import {
   Box,
   Button,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Paper,
   Tab,
   Tabs,
@@ -42,6 +47,10 @@ const AssignmentDashboard = () => {
   // Состояние для выбора типа назначения (тест/материал)
   const [assignmentType, setAssignmentType] = useState<AssignmentType>('test');
 
+  // Состояние для модального окна успеха
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
   const handleTabChange = (_: React.SyntheticEvent, newValue: PersonType) => {
     setActiveTab(newValue);
   };
@@ -60,14 +69,19 @@ const AssignmentDashboard = () => {
     // В реальном приложении здесь будет логика сохранения назначения в базу данных
     console.log(`Назначено для ${selectedPerson?.name}:`, assignedItems);
 
-    // Мокап сообщения об успешном назначении
-    alert(
-      `Успешно назначено для ${selectedPerson?.name}: ${assignedItems.length} ${
-        assignmentType === 'test' ? 'тестов' : 'учебных материалов'
-      }`
-    );
+    // Формируем сообщение об успешном назначении
+    const message = `Успешно назначено для ${selectedPerson?.name}: ${assignedItems.length} ${
+      assignmentType === 'test' ? 'тестов' : 'учебных материалов'
+    }`;
 
+    setSuccessMessage(message);
     setAssignModalOpen(false);
+    setSuccessModalOpen(true);
+  };
+
+  const handleCloseSuccessModal = () => {
+    setSuccessModalOpen(false);
+    setSuccessMessage('');
   };
 
   return (
@@ -150,6 +164,53 @@ const AssignmentDashboard = () => {
           assignmentType={assignmentType}
         />
       )}
+
+      {/* Модальное окно успешного назначения */}
+      <Dialog
+        open={successModalOpen}
+        onClose={handleCloseSuccessModal}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            textAlign: 'center',
+          },
+        }}
+      >
+        <DialogTitle sx={{ pt: 4, pb: 2 }}>
+          <CheckCircleIcon
+            sx={{
+              fontSize: 64,
+              color: 'success.main',
+              mb: 2,
+              display: 'block',
+              mx: 'auto',
+            }}
+          />
+          <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+            Успешно назначено!
+          </Typography>
+        </DialogTitle>
+
+        <DialogContent sx={{ px: 4, pb: 2 }}>
+          <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+            {successMessage}
+          </Typography>
+        </DialogContent>
+
+        <DialogActions sx={{ justifyContent: 'center', pb: 4, px: 4 }}>
+          <Button
+            onClick={handleCloseSuccessModal}
+            variant="contained"
+            color="primary"
+            size="large"
+            sx={{ minWidth: 120 }}
+          >
+            ОК
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

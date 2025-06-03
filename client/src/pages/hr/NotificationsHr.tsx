@@ -381,7 +381,21 @@ const Notifications = () => {
           onChange={handleTabChange}
           variant="scrollable"
           scrollButtons="auto"
-          sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
+          allowScrollButtonsMobile
+          sx={{
+            mb: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+            '& .MuiTabs-scrollButtons': {
+              '&.Mui-disabled': {
+                opacity: 0.3,
+              },
+            },
+            '& .MuiTab-root': {
+              minWidth: { xs: 100, sm: 'auto' },
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+            },
+          }}
         >
           <Tab label="Все" />
           <Tab
